@@ -103,7 +103,7 @@ class Edi(object):
         send_message(sender_id,
                      "Send me 'create poll roadtrip' to create a new playlist called 'roadtrip'.")
         send_message(sender_id, "Send me 'show all polls' to see a list of all current polls.")
-        send_message(sender_id, "Send me 'show friends' to get a list of all your friends that use me.")
+        send_message(sender_id, "Send me 'show active friends' to get a list of all your friends that use me.")
 
     def show_active_friends(self, sender_id, message_text):
         # List of all Messenger contacts that can be invited

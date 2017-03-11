@@ -84,6 +84,7 @@ class Poll:
         "user_id": user_id,
         "friends": [1,2,4,5,34]
         }
+        maybe include there also the name?
         """
         MONGODB_URI = "mongodb://heroku_f0s5338v:kurrih7o6a72idgjr2bf3c7g6d@ds129030.mlab.com:29030/heroku_f0s5338v"
         # MONGODB_URI = "mongodb://user:pass@mongoprovider.com:27409/rest"
@@ -172,35 +173,27 @@ class Poll:
                     self.polls.update_one({"poll_name": poll_name}, {'$set': {'participants': participants}})
         return "Error - not admin, not user or not friend."
 
-    def get_ranking(user_id, poll):
+    def get_ranking(self, user_id, poll):
     """ returning a list of dicts, each representing one song:
     {artist: <str>, url: <str>, name: <str>} sorted by descending popularity.
     Can return a string with the error message if the user is not a participant
     of the poll or the poll does not exist.
     """
+    ranking = []
 
-def get_active_friends(person_id):
-    """This method returns the friends using the application
-    of a given person. We store all friends of a person on Facebook.
-    We need an intersection of the
 
-    Collection of
-
-    {person_id: 123,
-     name: "name1",
-     friend_ids: [1234, 1235, 1236]
-    }
-    """
-    for
-    return json.dumps(friends)
-
-"""
-
-"""
-def get_most_popular_songs():
-
-    return None
-
+    def get_active_friends(self, person_id):
+        """This method returns the friends using the application
+        of a given person. We store all friends of a person on Facebook.
+        We need an intersection of the friends of person_id and app_users.
+        """
+        active_friends = []
+        app_users_set = set(app_users)
+        friends = self.friends.find_one({"user_id": person_id})["friends"]
+        for friend in friends:
+            if friend in self.app_users_set:
+                active_friends.append(friend)
+        return active_friends
 
 def initialize():
     MONGODB_URI = os.environ.get('MONGO_URL')

@@ -57,6 +57,10 @@ admin_id: 123
 
 --> when creating a poll, return error if there is a poll with some given name
 
+post = {song: "abc1",
+        user: "user1",
+        vote: 1,
+        last_session: datetime.datetime.now()}
 """
 class Poll:
     def __init__(self):
@@ -65,6 +69,8 @@ class Poll:
         "poll_name": poll_name,
         "admin_id" admin_id,
         "participants": [user_id_1, user_id_2, user_id_3, user_id_4]
+        "songs": [{"artist": "ad", "name": "a2", "uri": "fg@sf", "score":0},
+                  {"artist": "ad2", "name": "a22", "uri": "fg@s2f", "score":0}}]
         }
 
         Collection of selected polls will look like this:
@@ -103,7 +109,8 @@ class Poll:
             return "Error - the poll name is already used."
         poll = {"poll_name": poll_name,
                 "admin_id": user_id,
-                "participants": set([])
+                "participants": set([]),
+                "songs": []
                }
         self.polls.insert_one(post)
 
@@ -175,12 +182,18 @@ class Poll:
 
     def get_ranking(self, user_id, poll):
     """ returning a list of dicts, each representing one song:
-    {artist: <str>, url: <str>, name: <str>} sorted by descending popularity.
+    {artist: <str>, uri: <str>, name: <str>} sorted by descending popularity.
     Can return a string with the error message if the user is not a participant
     of the poll or the poll does not exist.
     """
     ranking = []
-
+    poll = self.polls.find_one({"poll_name": poll, "admin_id": user_id})
+    if not poll:
+        return "Error - either poll or user_id does not exist."
+    songs = sorted(poll["songs"], key=lambda x: x["score"], reverse=True)
+    answ = []
+    for song in songs:
+        answ.append({"artist": song["artist"], "uri": song["uri"], "name": song["name"]})
 
     def get_active_friends(self, person_id):
         """This method returns the friends using the application
@@ -194,29 +207,3 @@ class Poll:
             if friend in self.app_users_set:
                 active_friends.append(friend)
         return active_friends
-
-def initialize():
-    MONGODB_URI = os.environ.get('MONGO_URL')
-    if not MONGODB_URI:
-        MONGODB_URI = "mongodb://localhost:27017/rest";
-
-    #  MONGO_URL=mongodb://user:pass@mongoprovider.com:27409/rest
-
-    client = MongoClient(MONGODB_URI) # this should direct to Heroku
-    db = client['songs-database'] # the database with that name should be created in Heroku
-    # or use db = client.get_default_database()
-    # collection = db['songs-collection']
-
-    # if we get a new vote from some user
-    # it should be in json format
-
-    post = {song: "abc1",
-            user: "user1",
-            vote: 1,
-            last_session: datetime.datetime.now()}
-
-    posts = db.posts
-
-    posts.insert_one(post)
-
-# posts.find_one() # for finding a post

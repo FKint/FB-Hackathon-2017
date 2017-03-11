@@ -36,14 +36,13 @@ class Edi(object):
     def handle_message(self, sender_id, message_text):
         action = self.get_action(message_text)
         if action == Edi.ACTION_INTRODUCE_BOT:
-            answer = self.introduce_bot(sender_id, message_text)
+            self.introduce_bot(sender_id, message_text)
         elif action == Edi.ACTION_CREATE_POLL:
-            answer = self.create_poll(sender_id, message_text)
+            self.create_poll(sender_id, message_text)
         # TODO: add other cases
 
         else:
-            answer = "I don't know what you mean"
-        return answer
+            send_message(sender_id, "I don't know what you mean. Send me 'help' if you want some help.")
 
     ACTION_INTRODUCE_BOT = "ACTION_INTRODUCE_BOT"
     ACTION_SHOW_ACTIVE_FRIENDS = "ACTION_SHOW_ACTIVE_FRIENDS"
@@ -57,6 +56,13 @@ class Edi(object):
     ACTION_SHOW_SONG_OPTION = "ACTION_SHOW_SONG_OPTION"
     ACTION_VOTE_SONG_OPTION = "ACTION_VOTE_SONG_OPTION"
 
+    PREFIX_ACTIONS = {
+        "help": ACTION_INTRODUCE_BOT,
+        "info": ACTION_INTRODUCE_BOT,
+        "hello": ACTION_INTRODUCE_BOT,
+        "create poll": ACTION_CREATE_POLL  # Only 1 prefix allowed for now
+    }
+
     def get_action(self, message_text):
         """
         Return any of the above actions.
@@ -64,16 +70,9 @@ class Edi(object):
         :return:
         """
         message_text = message_text.lower()
-        prefix_actions = {
-            "help": Edi.ACTION_INTRODUCE_BOT,
-            "info": Edi.ACTION_INTRODUCE_BOT,
-            "hello": Edi.ACTION_INTRODUCE_BOT,
-            "create poll": Edi.ACTION_CREATE_POLL
-        }
-        for prefix in prefix_actions:
+        for prefix in Edi.PREFIX_ACTIONS:
             if message_text.startswith(prefix):
-                return prefix_actions[prefix]
-
+                return Edi.PREFIX_ACTIONS[prefix]
         return None
 
     def introduce_bot(self, sender_id, message_text):
@@ -90,21 +89,91 @@ class Edi(object):
 
     def create_poll(self, sender_id, message_text):
         # Create + confirm
-        poll_name = message_text.split()[-1]
+        parts = message_text.split()
+        if len(parts) != 3:
+            send_message(
+                sender_id,
+                "If you want me to create a new poll, please send the following command: 'create poll <name>'"
+                "where name should be a string without whitespace.")
+            return
+        poll_name = parts[-1]
         # How to add songs, how to invite friends, how to see ranking
-        # Select this poll + notify
-        pass
+        error = model.create_poll(sender_id, poll_name)
+        if error is not None:
+            send_message(
+                sender_id,
+                "I was not able to create a new poll. The error message was {}.".format(error)
+            )
+            return
+        send_message(
+            sender_id,
+            "I created a new poll for you with the name '{}'.".format(poll_name)
+        )
+        error = model.select_poll(
+            sender_id,
+            poll_name
+        )
+        if error is not None:
+            send_message(
+                sender_id,
+                "I wanted to select this poll for you, but I failed. I'm so sorry to disappoint you :("
+            )
+            return
+        send_message(
+            sender_id,
+            "I selected poll {} for you.".format(poll_name)
+        )
+        self.send_poll_help(sender_id, poll_name)
+
+    def send_poll_help(self, sender_id, poll_name):
+        if model.is_admin_of_poll(sender_id, poll_name):
+            send_message(
+                sender_id,
+                "You can invite friends to this poll by sending me 'invite <friend_name>'. "
+                "Note that you can only invite friends which have talked to me before."
+            )
+        send_message(
+            sender_id,
+            "You can show all participants in this poll by sending me 'show participants'."
+        )
+        send_message(
+            sender_id,
+            "You can suggest a new song for this poll by sending me 'suggest <song>', where "
+            "song can be a Spotify song ID, URI or a string of the format 'Artist - Song'."
+        )
+        send_message(
+            sender_id,
+            "You can ask me to send a song that you can vote for by sending 'show option'."
+        )
+        send_message(
+            sender_id,
+            "You can see the ranking by sending me 'show ranking'."
+        )
 
     def show_poll(self, sender_id, message_text):
         # Which is the currently active poll, how to switch polls, how to see all polls
-        pass
+        poll_name = model.get_selected_poll(sender_id)
+        if poll_name is None:
+            send_message(
+                sender_id,
+                "You haven't selected a poll yet."
+            )
+        else:
+            send_message(
+                sender_id,
+                "You're currently working on poll {}.".format(poll_name)
+            )
+        send_message(
+            sender_id,
+            "You can see all polls by sending me 'show all polls'."
+        )
+        send_message(
+            sender_id,
+            "You can select another poll by sending me 'select <poll>', where <poll> is the name of the poll."
+        )
 
     def select_poll(self, sender_id, message_text):
         # <poll> selected
-        # How to invite friends (if admin)
-        # How to suggest songs
-        # How to vote for songs
-        # How to see the ranking
         pass
 
     def invite_friend(self, sender_id, message_text):
@@ -131,3 +200,8 @@ class Edi(object):
         # Apply vote
         # Confirm vote
         pass
+
+
+if __name__ == "__main__":
+    e = Edi()
+    e.handle_message(os.environ['USER_ID'], "query")

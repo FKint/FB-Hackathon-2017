@@ -1,11 +1,15 @@
-import json
 import os
 import sys
 
-import requests
-from flask import Flask, request, render_template
+from flask import Flask, request
 
 import chatbot
+
+
+def log(message):  # simple wrapper for logging to stdout on heroku
+    print str(message)
+    sys.stdout.flush()
+
 
 app = Flask(__name__)
 
@@ -21,7 +25,7 @@ def verify():
             return "Verification token mismatch", 403
         return request.args["hub.challenge"], 200
 
-    return render_template('pig.html'), 200
+    return "not ok", 404
 
 
 @app.route('/', methods=['POST'])
@@ -47,9 +51,7 @@ def webhook():
                     except:
                         message_text = "hello"
 
-                    answer = edi.handle_message(message_text)
-
-                    send_message(sender_id, answer)
+                    edi.handle_message(sender_id, message_text)
 
                 if messaging_event.get("delivery"):  # delivery confirmation
                     pass
@@ -63,56 +65,5 @@ def webhook():
     return "ok", 200
 
 
-def send_message(recipient_id, message_text):
-    log("sending message to {recipient}: {text}".format(recipient=recipient_id, text=message_text))
-
-    params = {
-        "access_token": os.environ["PAGE_ACCESS_TOKEN"]
-    }
-    headers = {
-        "Content-Type": "application/json"
-    }
-    data = json.dumps({
-        "recipient": {
-            "id": recipient_id
-        },
-        "message": {
-            "text": message_text
-        }
-    })
-    r = requests.post("https://graph.facebook.com/v2.6/me/messages", params=params, headers=headers, data=data)
-    if r.status_code != 200:
-        log(r.status_code)
-        log(r.text)
-
-
-def log(message):  # simple wrapper for logging to stdout on heroku
-    print
-    str(message)
-    sys.stdout.flush()
-
-
-###########################
-# web interface starts here
-@app.route('/pig')
-def signUp():
-    return render_template('pig.html')
-
-
-@app.route('/ajaxcalc', methods=['POST', 'GET'])
-def ajaxcalc():
-    if request.method == 'POST':
-        print
-        "hello"
-        # pig1 and pig2 are sent from the ajax script
-        input1 = request.form['pig1']
-        # print input1
-        # input2=int(request.form['pig2'])
-        result = edi.handle_message(input1)
-        return json.dumps({"result": result})
-    else:
-        return "error"
-
-
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run(debug=True, host="0.0.0.0")

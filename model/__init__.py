@@ -36,7 +36,15 @@ def get_polls_for_user(user_id):
     return ["roadtrip", "house_party", "all_anarchy"]
 
 
-def invite_friend(user_id, active_poll, friend):
+def invite_friend(user_id, poll_name, friend):
     if friend not in get_active_friends(user_id):
         return "That's an imaginary friend?"
     return None
+
+
+def get_ranking(user_id, poll_name):
+    return [
+        {"name": "Naive", "artist": "The Kooks", "uri": "spotify:track:7BHPGtpuuWWsvE7cCaMuEU"},
+        {"name": "Roxanne", "artist": "The Police", "uri": "spotify:track:2NMgVh5qaPprKTEzFe3501"},
+        {"name": "Like a stone", "artist": "Audioslave", "uri": "spotify:track:3YuaBvuZqcwN3CEAyyoaei"},
+    ]

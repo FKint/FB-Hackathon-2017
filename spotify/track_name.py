@@ -1,9 +1,9 @@
-import spotipy
 import re
 import urllib
+import spotipy
+
 
 def get_track_from_message(message):
-
     if "spotify.com" in message:
         pattern = re.search("track/(\w+)\W*",message)
         if pattern.group(1):
@@ -18,4 +18,3 @@ def get_track_from_message(message):
 
 
 #get_track_from_message("https://open.spotify.com/track/6qnaCx4wQQBqFd9XdQyWjC?context=spotify%3Aalbum%3A51q9Mkz5BVwTRYsMlLASVZ")
-

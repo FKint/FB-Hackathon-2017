@@ -3,10 +3,11 @@ import os
 
 import requests
 
+import model
 from logs import log
 
 
-def send_message(recipient_id, message_text):
+def send_message(recipient_id, message_text, buttons=None):
     log("sending message to {recipient}: {text}".format(recipient=recipient_id, text=message_text))
 
     params = {
@@ -15,25 +16,35 @@ def send_message(recipient_id, message_text):
     headers = {
         "Content-Type": "application/json"
     }
-    data = json.dumps({
+    data = {
         "recipient": {
             "id": recipient_id
         },
         "message": {
             "text": message_text
         }
-    })
+    }
+
+    if buttons is not None:
+        data["message"] = {
+            "attachment": {
+                "type": "template",
+                "payload": {
+                    "template_type": "button",
+                    "text": "Click me",
+                    "buttons": buttons,
+                }
+            }
+        }
+
+    data = json.dumps(data)
+
+    print "Data is " + data
+
     r = requests.post("https://graph.facebook.com/v2.6/me/messages", params=params, headers=headers, data=data)
     if r.status_code != 200:
         log(r.status_code)
         log(r.text)
-
-
-# Dummy method - to be deleted
-def get_active_friends():
-    friends = ["Friend 1", "Friend 2", "Friend 3"]
-
-    return friends
 
 
 class Edi(object):
@@ -47,19 +58,25 @@ class Edi(object):
 
         action = self.get_action(message_text)
 
-        print "and action = " + action
+        print "and action = " + (action if action is not None else "")
         if action == Edi.ACTION_INTRODUCE_BOT:
             self.introduce_bot(sender_id, message_text)
         elif action == Edi.ACTION_CREATE_POLL:
             self.create_poll(sender_id, message_text)
         elif action == Edi.ACTION_SHOW_ACTIVE_FRIENDS:
             self.show_active_friends(sender_id, message_text)
+        elif action == Edi.ACTION_SELECT_POLL:
+            self.select_poll(sender_id, message_text)
         elif action == Edi.ACTION_SHOW_POLL:
             self.show_poll(sender_id, message_text)
         elif action == Edi.ACTION_SHOW_POLLS_LIST:
             self.show_polls_list(sender_id, message_text)
         elif action == Edi.ACTION_INVITE_FRIEND:
             self.invite_friend(sender_id, message_text)
+        elif action == Edi.ACTION_SHOW_SONG_OPTION:
+            self.show_song_option(sender_id, message_text)
+        elif action == Edi.ACTION_SHOW_RANKING:
+            self.show_ranking(sender_id, message_text)
         # TODO: add other cases
 
         else:
@@ -83,7 +100,12 @@ class Edi(object):
         "hello": ACTION_INTRODUCE_BOT,
         "create poll": ACTION_CREATE_POLL,  # Only 1 prefix allowed for now
         "show active friends": ACTION_SHOW_ACTIVE_FRIENDS,
-        "show poll": ACTION_SHOW_POLL
+        "select poll": ACTION_SELECT_POLL,
+        "show poll": ACTION_SHOW_POLL,
+        "show song": ACTION_SHOW_SONG_OPTION,
+        "invite": ACTION_INVITE_FRIEND,
+        "show all polls": ACTION_SHOW_POLLS_LIST,
+        "show ranking": ACTION_SHOW_RANKING
     }
 
     def get_action(self, message_text):
@@ -93,6 +115,7 @@ class Edi(object):
         :return:
         """
         message_text = message_text.lower()
+        # TODO: if message_text contains spotify/song identifier -> return Edi.ACTION_SUGGEST_SONG
         for prefix in Edi.PREFIX_ACTIONS:
             if message_text.startswith(prefix):
                 return Edi.PREFIX_ACTIONS[prefix]
@@ -104,11 +127,11 @@ class Edi(object):
         send_message(sender_id,
                      "Send me 'create poll roadtrip' to create a new playlist called 'roadtrip'.")
         send_message(sender_id, "Send me 'show all polls' to see a list of all current polls.")
-        send_message(sender_id, "Send me 'show friends' to get a list of all your friends that use me.")
+        send_message(sender_id, "Send me 'show active friends' to get a list of all your friends that use me.")
 
     def show_active_friends(self, sender_id, message_text):
         # List of all Messenger contacts that can be invited
-        activeFriends = get_active_friends()
+        activeFriends = model.get_active_friends(sender_id)
 
         messageContent = "The friends that can be invited are:\n"
         for friend in activeFriends:
@@ -198,7 +221,7 @@ class Edi(object):
         )
         send_message(
             sender_id,
-            "You can select another poll by sending me 'select <poll>', where <poll> is the name of the poll."
+            "You can select another poll by sending me 'select poll <poll>', where <poll> is the name of the poll."
         )
 
     def show_polls_list(self, sender_id, message_text):
@@ -215,12 +238,25 @@ class Edi(object):
             )
         send_message(
             sender_id,
-            "You can select another poll by sending me 'select <poll>', where <poll> is the name of the poll."
+            "You can select another poll by sending me 'select poll <poll>', where <poll> is the name of the poll."
         )
 
     def select_poll(self, sender_id, message_text):
         # <poll> selected
-        pass
+        parts = message_text.split()
+        if len(parts) != 3:
+            send_message(
+                sender_id,
+                "If you want me to select you a new poll, please send the following command: 'select poll <name>'"
+                "where name should be a string without whitespace.")
+            return
+
+        poll_name = parts[-1]
+
+        if model.select_poll(sender_id, poll_name) is None:
+            send_message(sender_id, "Poll successfully selected")
+        else:
+            send_message(sender_id, "Error occurred when trying to select the poll")
 
     def invite_friend(self, sender_id, message_text):
         # Confirm that <friend> has been added to <poll>
@@ -228,7 +264,7 @@ class Edi(object):
         if active_poll is None:
             send_message(
                 sender_id,
-                "You haven't selected a poll. Try 'show all polls' and 'select <poll>' to select a poll."
+                "You haven't selected a poll. Try 'show all polls' and 'select poll <poll>' to select a poll."
             )
             return
         parts = message_text.split()
@@ -265,13 +301,41 @@ class Edi(object):
     def show_ranking(self, sender_id, message_text):
         # Show top 10 songs
         # Later: paginator: next 10
-        pass
+        active_poll = model.get_selected_poll(sender_id)
+        if active_poll is None:
+            send_message(
+                sender_id,
+                "You haven't selected a poll. Try 'show all polls' and 'select poll <poll>' to select a poll."
+            )
+            return
+        ranking = model.get_ranking(sender_id, active_poll)
+        send_message(sender_id, "The current favourite songs are: ")
+        index = 0
+        for song in ranking:
+            index += 1
+            send_message(sender_id, "Nb. {}: {} ({})".format(index, song['artist'] + " - " + song['name'],
+                                                             song['uri']))
 
     def show_song_option(self, sender_id, message_text):
         # Retrieve random song that user needs to vote for
         # Present with 0, 1 or cancel button.
         # No song available: suggest a song?
-        pass
+
+        message = "Please vot for this song"
+        buttons = [ 
+        {
+            "type":"postback",
+            "title":"Vote option",
+            "payload": 1
+        }]
+        
+        
+        send_message(
+            sender_id,
+            message,
+            buttons
+        )
+            
 
     def vote_song_option(self, sender_id, message_text):
         # Apply vote

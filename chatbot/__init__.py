@@ -3,9 +3,8 @@ import os
 
 import requests
 
-#from app import log
-def log(msg):
-    print msg
+from logs import log
+
 
 def send_message(recipient_id, message_text):
     log("sending message to {recipient}: {text}".format(recipient=recipient_id, text=message_text))
@@ -64,7 +63,7 @@ class Edi(object):
         :param message_text:
         :return:
         """
-        message_text = message_text.tolower()
+        message_text = message_text.lower()
         prefix_actions = {
             "help": Edi.ACTION_INTRODUCE_BOT,
             "info": Edi.ACTION_INTRODUCE_BOT,

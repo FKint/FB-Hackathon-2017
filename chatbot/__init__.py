@@ -1,12 +1,45 @@
+import json
+import os
+
+import requests
+
+#from app import log
+def log(msg):
+    print msg
+
+def send_message(recipient_id, message_text):
+    log("sending message to {recipient}: {text}".format(recipient=recipient_id, text=message_text))
+
+    params = {
+        "access_token": os.environ["PAGE_ACCESS_TOKEN"]
+    }
+    headers = {
+        "Content-Type": "application/json"
+    }
+    data = json.dumps({
+        "recipient": {
+            "id": recipient_id
+        },
+        "message": {
+            "text": message_text
+        }
+    })
+    r = requests.post("https://graph.facebook.com/v2.6/me/messages", params=params, headers=headers, data=data)
+    if r.status_code != 200:
+        log(r.status_code)
+        log(r.text)
+
+
 class Edi(object):
     def __init__(self):
         pass
 
     def handle_message(self, sender_id, message_text):
         action = self.get_action(message_text)
-
-        if action == Edi.ACTION_CREATE_POLL:
-            anser = self.create_poll(sender_id, message_text)
+        if action == Edi.ACTION_INTRODUCE_BOT:
+            answer = self.introduce_bot(sender_id, message_text)
+        elif action == Edi.ACTION_CREATE_POLL:
+            answer = self.create_poll(sender_id, message_text)
         # TODO: add other cases
 
         else:
@@ -31,11 +64,26 @@ class Edi(object):
         :param message_text:
         :return:
         """
+        message_text = message_text.tolower()
+        prefix_actions = {
+            "help": Edi.ACTION_INTRODUCE_BOT,
+            "info": Edi.ACTION_INTRODUCE_BOT,
+            "hello": Edi.ACTION_INTRODUCE_BOT,
+            "create poll": Edi.ACTION_CREATE_POLL
+        }
+        for prefix in prefix_actions:
+            if message_text.startswith(prefix):
+                return prefix_actions[prefix]
+
         return None
 
-    def introduce_bot(self):
+    def introduce_bot(self, sender_id, message_text):
         # How to create a poll, list of all polls, show friends
-        pass
+        send_message(sender_id, "Hello, I'm Edi. I will help you vote on playlists with your friends using our polls.")
+        send_message(sender_id,
+                     "Send me 'create poll roadtrip' to create a new playlist called 'roadtrip'.")
+        send_message(sender_id, "Send me 'show all polls' to see a list of all current polls.")
+        send_message(sender_id, "Send me 'show friends' to get a list of all your friends that use me.")
 
     def show_active_friends(self, sender_id, message_text):
         # List of all Messenger contacts that can be invited

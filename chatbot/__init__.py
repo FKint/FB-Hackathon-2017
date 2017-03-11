@@ -325,11 +325,20 @@ class Edi(object):
         buttons = [
             {
                 "type": "postback",
-                "title": "Vote option",
+                "title": "Dislike",
                 "payload": json.dumps({
                     "song_id": "<REDACTED>",
                     "poll_id": "<REDACTED>",
-                    "score": "<REDACTED>"
+                    "score": 0
+                })
+            },
+            {
+                "type": "postback",
+                "title": "Like",
+                "payload": json.dumps({
+                    "song_id": "<REDACTED>",
+                    "poll_id": "<REDACTED>",
+                    "score": 1
                 })
             }
         ]

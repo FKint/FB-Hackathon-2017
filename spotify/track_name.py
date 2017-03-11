@@ -1,28 +1,21 @@
 import spotipy
 import re
+import urllib
 
 def get_track_from_message(message):
-	'''
-	Given a message, decided whether is a lin, song id or song name
-	and returns its spotify id
-	Sample usages:
 
-    get_track_from_message("5T6KMs50XcY81tLhGKHQSB")
-    get_track_from_message("https://play.spotify.com/track/5T6KMs50XcY81tLhGKHQSB")
-    get_track_from_message("Shakira")
-	'''
     if "spotify.com" in message:
-        return message.split("/")[-1]
-    else:
-        pattern = re.compile("^([A-Z0-9]*[0-9]+[A-Z0-9]*)$")
-        if pattern.match(message.upper()):
-            return message
-        else:
-            spotify = spotipy.Spotify()
-            results = spotify.search(q='track:' + message, type='track')
-            items = results['tracks']['items']
-            if len(items) > 0:
-                track = items[0]
-                return track['id']
-            else:
-            	return -1
+        pattern = re.search("track/(\w+)\W*",message)
+        if pattern.group(1):
+            sp = spotipy.Spotify()
+            res=pattern.group(1)
+            if sp.tracks([res])['tracks']!=[None]:
+                print "yep"
+                print res
+            return res
+    return None
+   
+
+
+#get_track_from_message("https://open.spotify.com/track/6qnaCx4wQQBqFd9XdQyWjC?context=spotify%3Aalbum%3A51q9Mkz5BVwTRYsMlLASVZ")
+

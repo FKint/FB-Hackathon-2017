@@ -80,7 +80,9 @@ class Edi(object):
         "create poll": ACTION_CREATE_POLL,  # Only 1 prefix allowed for now
         "show active friends": ACTION_SHOW_ACTIVE_FRIENDS,
         "select poll": ACTION_SELECT_POLL,
-        "show poll": ACTION_SHOW_POLL
+        "show poll": ACTION_SHOW_POLL,
+        "invite": ACTION_INVITE_FRIEND,
+        "show all polls": ACTION_SHOW_POLLS_LIST
     }
 
     def get_action(self, message_text):

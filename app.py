@@ -3,7 +3,7 @@ import os
 import sys
 
 import requests
-from flask import Flask, request, render_template
+from flask import Flask, request
 
 import chatbot
 
@@ -21,7 +21,7 @@ def verify():
             return "Verification token mismatch", 403
         return request.args["hub.challenge"], 200
 
-    return render_template('pig.html'), 200
+    return "not ok", 404
 
 
 @app.route('/', methods=['POST'])
@@ -87,31 +87,8 @@ def send_message(recipient_id, message_text):
 
 
 def log(message):  # simple wrapper for logging to stdout on heroku
-    print
-    str(message)
+    print str(message)
     sys.stdout.flush()
-
-
-###########################
-# web interface starts here
-@app.route('/pig')
-def signUp():
-    return render_template('pig.html')
-
-
-@app.route('/ajaxcalc', methods=['POST', 'GET'])
-def ajaxcalc():
-    if request.method == 'POST':
-        print
-        "hello"
-        # pig1 and pig2 are sent from the ajax script
-        input1 = request.form['pig1']
-        # print input1
-        # input2=int(request.form['pig2'])
-        result = edi.handle_message(input1)
-        return json.dumps({"result": result})
-    else:
-        return "error"
 
 
 if __name__ == '__main__':

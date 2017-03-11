@@ -321,21 +321,33 @@ class Edi(object):
         # Present with 0, 1 or cancel button.
         # No song available: suggest a song?
 
-        message = "Please vot for this song"
-        buttons = [ 
-        {
-            "type":"postback",
-            "title":"Vote option",
-            "payload": 1
-        }]
-        
-        
+        message = "Please vote for this song"
+        buttons = [
+            {
+                "type": "postback",
+                "title": "Dislike",
+                "payload": json.dumps({
+                    "song_id": "<REDACTED>",
+                    "poll_id": "<REDACTED>",
+                    "score": 0
+                })
+            },
+            {
+                "type": "postback",
+                "title": "Like",
+                "payload": json.dumps({
+                    "song_id": "<REDACTED>",
+                    "poll_id": "<REDACTED>",
+                    "score": 1
+                })
+            }
+        ]
+
         send_message(
             sender_id,
             message,
             buttons
         )
-            
 
     def vote_song_option(self, sender_id, message_text):
         # Apply vote

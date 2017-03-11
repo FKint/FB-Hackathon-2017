@@ -321,12 +321,16 @@ class Edi(object):
         # Present with 0, 1 or cancel button.
         # No song available: suggest a song?
 
-        message = "Please vot for this song"
+        message = "Please vote for this song"
         buttons = [
             {
                 "type": "postback",
                 "title": "Vote option",
-                "payload": "1"
+                "payload": {
+                    "song_id": "<REDACTED>",
+                    "poll_id": "<REDACTED>",
+                    "score": "<REDACTED>"
+                }
             }
         ]
 

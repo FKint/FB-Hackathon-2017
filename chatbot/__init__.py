@@ -35,11 +35,13 @@ def get_active_friends():
 
     return friends
 
+
 def select_poll(user_id, poll_name):
     if poll_name != "wrong_poll":
         return None
     else:
         return "This should be an error"
+
 
 class Edi(object):
     def __init__(self):
@@ -242,7 +244,6 @@ class Edi(object):
             send_message(sender_id, "Poll successfully selected")
         else:
             send_message(sender_id, "Error occurred when trying to select the poll")
-
 
     def invite_friend(self, sender_id, message_text):
         # Confirm that <friend> has been added to <poll>

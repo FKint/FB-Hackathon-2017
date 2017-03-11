@@ -7,7 +7,7 @@ import model
 from logs import log
 
 
-def send_message(recipient_id, message_text):
+def send_message(recipient_id, message_text, buttons=None):
     log("sending message to {recipient}: {text}".format(recipient=recipient_id, text=message_text))
 
     params = {
@@ -16,14 +16,31 @@ def send_message(recipient_id, message_text):
     headers = {
         "Content-Type": "application/json"
     }
-    data = json.dumps({
+    data = {
         "recipient": {
             "id": recipient_id
         },
         "message": {
             "text": message_text
         }
-    })
+    }
+
+    if buttons is not None:
+        data["message"] = {
+            "attachment": {
+                "type": "template",
+                "payload": {
+                    "template_type": "button",
+                    "text": "Click me",
+                    "buttons": buttons,
+                }
+            }
+        }
+
+    data = json.dumps(data)
+
+    print "Data is " + data
+
     r = requests.post("https://graph.facebook.com/v2.6/me/messages", params=params, headers=headers, data=data)
     if r.status_code != 200:
         log(r.status_code)
@@ -56,6 +73,8 @@ class Edi(object):
             self.show_polls_list(sender_id, message_text)
         elif action == Edi.ACTION_INVITE_FRIEND:
             self.invite_friend(sender_id, message_text)
+        elif action == Edi.ACTION_SHOW_SONG_OPTION:
+            self.show_song_option(sender_id, message_text)
         # TODO: add other cases
 
         else:
@@ -80,7 +99,8 @@ class Edi(object):
         "create poll": ACTION_CREATE_POLL,  # Only 1 prefix allowed for now
         "show active friends": ACTION_SHOW_ACTIVE_FRIENDS,
         "select poll": ACTION_SELECT_POLL,
-        "show poll": ACTION_SHOW_POLL
+        "show poll": ACTION_SHOW_POLL,
+        "show song": ACTION_SHOW_SONG_OPTION
     }
 
     def get_action(self, message_text):
@@ -281,7 +301,22 @@ class Edi(object):
         # Retrieve random song that user needs to vote for
         # Present with 0, 1 or cancel button.
         # No song available: suggest a song?
-        pass
+
+        message = "Please vot for this song"
+        buttons = [ 
+        {
+            "type":"postback",
+            "title":"Vote option",
+            "payload": 1
+        }]
+        
+        
+        send_message(
+            sender_id,
+            message,
+            buttons
+        )
+            
 
     def vote_song_option(self, sender_id, message_text):
         # Apply vote

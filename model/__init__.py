@@ -48,3 +48,11 @@ def get_ranking(user_id, poll_name):
         {"name": "Roxanne", "artist": "The Police", "uri": "spotify:track:2NMgVh5qaPprKTEzFe3501"},
         {"name": "Like a stone", "artist": "Audioslave", "uri": "spotify:track:3YuaBvuZqcwN3CEAyyoaei"},
     ]
+
+
+def update_user_vote(user_id, poll_id, song_id, score):
+    if score == 1:
+        return None
+    else:
+        return "ERROR - the score is 0"
+        

@@ -197,7 +197,7 @@ class Edi(object):
         )
         send_message(
             sender_id,
-            "You can select another poll by sending me 'select <poll>', where <poll> is the name of the poll."
+            "You can select another poll by sending me 'select poll <poll>', where <poll> is the name of the poll."
         )
 
     def show_polls_list(self, sender_id, message_text):
@@ -214,7 +214,7 @@ class Edi(object):
             )
         send_message(
             sender_id,
-            "You can select another poll by sending me 'select <poll>', where <poll> is the name of the poll."
+            "You can select another poll by sending me 'select poll <poll>', where <poll> is the name of the poll."
         )
 
     def select_poll(self, sender_id, message_text):
@@ -240,7 +240,7 @@ class Edi(object):
         if active_poll is None:
             send_message(
                 sender_id,
-                "You haven't selected a poll. Try 'show all polls' and 'select <poll>' to select a poll."
+                "You haven't selected a poll. Try 'show all polls' and 'select poll <poll>' to select a poll."
             )
             return
         parts = message_text.split()

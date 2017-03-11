@@ -329,7 +329,8 @@ class Edi(object):
                 "payload": json.dumps({
                     "song_id": "<REDACTED>",
                     "poll_id": "<REDACTED>",
-                    "score": 0
+                    "score": 0,
+                    "action": "voting"
                 })
             },
             {
@@ -338,7 +339,8 @@ class Edi(object):
                 "payload": json.dumps({
                     "song_id": "<REDACTED>",
                     "poll_id": "<REDACTED>",
-                    "score": 1
+                    "score": 1,
+                    "action": "voting"
                 })
             }
         ]

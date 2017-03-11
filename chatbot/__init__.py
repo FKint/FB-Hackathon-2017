@@ -75,6 +75,8 @@ class Edi(object):
             self.invite_friend(sender_id, message_text)
         elif action == Edi.ACTION_SHOW_SONG_OPTION:
             self.show_song_option(sender_id, message_text)
+        elif action == Edi.ACTION_SHOW_RANKING:
+            self.show_ranking(sender_id, message_text)
         # TODO: add other cases
 
         else:
@@ -100,7 +102,10 @@ class Edi(object):
         "show active friends": ACTION_SHOW_ACTIVE_FRIENDS,
         "select poll": ACTION_SELECT_POLL,
         "show poll": ACTION_SHOW_POLL,
-        "show song": ACTION_SHOW_SONG_OPTION
+        "show song": ACTION_SHOW_SONG_OPTION,
+        "invite": ACTION_INVITE_FRIEND,
+        "show all polls": ACTION_SHOW_POLLS_LIST,
+        "show ranking": ACTION_SHOW_RANKING
     }
 
     def get_action(self, message_text):
@@ -110,6 +115,7 @@ class Edi(object):
         :return:
         """
         message_text = message_text.lower()
+        # TODO: if message_text contains spotify/song identifier -> return Edi.ACTION_SUGGEST_SONG
         for prefix in Edi.PREFIX_ACTIONS:
             if message_text.startswith(prefix):
                 return Edi.PREFIX_ACTIONS[prefix]
@@ -121,7 +127,7 @@ class Edi(object):
         send_message(sender_id,
                      "Send me 'create poll roadtrip' to create a new playlist called 'roadtrip'.")
         send_message(sender_id, "Send me 'show all polls' to see a list of all current polls.")
-        send_message(sender_id, "Send me 'show friends' to get a list of all your friends that use me.")
+        send_message(sender_id, "Send me 'show active friends' to get a list of all your friends that use me.")
 
     def show_active_friends(self, sender_id, message_text):
         # List of all Messenger contacts that can be invited
@@ -215,7 +221,7 @@ class Edi(object):
         )
         send_message(
             sender_id,
-            "You can select another poll by sending me 'select <poll>', where <poll> is the name of the poll."
+            "You can select another poll by sending me 'select poll <poll>', where <poll> is the name of the poll."
         )
 
     def show_polls_list(self, sender_id, message_text):
@@ -232,7 +238,7 @@ class Edi(object):
             )
         send_message(
             sender_id,
-            "You can select another poll by sending me 'select <poll>', where <poll> is the name of the poll."
+            "You can select another poll by sending me 'select poll <poll>', where <poll> is the name of the poll."
         )
 
     def select_poll(self, sender_id, message_text):
@@ -258,7 +264,7 @@ class Edi(object):
         if active_poll is None:
             send_message(
                 sender_id,
-                "You haven't selected a poll. Try 'show all polls' and 'select <poll>' to select a poll."
+                "You haven't selected a poll. Try 'show all polls' and 'select poll <poll>' to select a poll."
             )
             return
         parts = message_text.split()
@@ -295,7 +301,20 @@ class Edi(object):
     def show_ranking(self, sender_id, message_text):
         # Show top 10 songs
         # Later: paginator: next 10
-        pass
+        active_poll = model.get_selected_poll(sender_id)
+        if active_poll is None:
+            send_message(
+                sender_id,
+                "You haven't selected a poll. Try 'show all polls' and 'select poll <poll>' to select a poll."
+            )
+            return
+        ranking = model.get_ranking(sender_id, active_poll)
+        send_message(sender_id, "The current favourite songs are: ")
+        index = 0
+        for song in ranking:
+            index += 1
+            send_message(sender_id, "Nb. {}: {} ({})".format(index, song['artist'] + " - " + song['name'],
+                                                             song['uri']))
 
     def show_song_option(self, sender_id, message_text):
         # Retrieve random song that user needs to vote for

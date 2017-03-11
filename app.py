@@ -47,9 +47,7 @@ def webhook():
                     except:
                         message_text = "hello"
 
-                    answer = edi.handle_message(message_text)
-
-                    send_message(sender_id, answer)
+                    edi.handle_message(sender_id, message_text)
 
                 if messaging_event.get("delivery"):  # delivery confirmation
                     pass

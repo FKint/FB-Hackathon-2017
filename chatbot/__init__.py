@@ -3,6 +3,7 @@ import os
 
 import requests
 
+import model
 from logs import log
 
 
@@ -27,20 +28,6 @@ def send_message(recipient_id, message_text):
     if r.status_code != 200:
         log(r.status_code)
         log(r.text)
-
-
-# Dummy methods - to be deleted
-def get_active_friends():
-    friends = ["Friend 1", "Friend 2", "Friend 3"]
-
-    return friends
-
-
-def select_poll(user_id, poll_name):
-    if poll_name != "wrong_poll":
-        return None
-    else:
-        return "This should be an error"
 
 
 class Edi(object):
@@ -118,7 +105,7 @@ class Edi(object):
 
     def show_active_friends(self, sender_id, message_text):
         # List of all Messenger contacts that can be invited
-        activeFriends = get_active_friends()
+        activeFriends = model.get_active_friends(sender_id)
 
         messageContent = "The friends that can be invited are:\n"
         for friend in activeFriends:
@@ -240,7 +227,7 @@ class Edi(object):
 
         poll_name = parts[-1]
 
-        if select_poll(sender_id, poll_name) is None:
+        if model.select_poll(sender_id, poll_name) is None:
             send_message(sender_id, "Poll successfully selected")
         else:
             send_message(sender_id, "Error occurred when trying to select the poll")

@@ -10,9 +10,7 @@ def get_track_from_message(message):
             sp = spotipy.Spotify()
             res=pattern.group(1)
             if sp.tracks([res])['tracks']!=[None]:
-                print "yep"
-                print res
-            return res
+                return res
     return None
    
 

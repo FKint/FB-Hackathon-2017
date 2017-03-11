@@ -326,11 +326,11 @@ class Edi(object):
             {
                 "type": "postback",
                 "title": "Vote option",
-                "payload": {
+                "payload": json.dump({
                     "song_id": "<REDACTED>",
                     "poll_id": "<REDACTED>",
                     "score": "<REDACTED>"
-                }
+                })
             }
         ]
 

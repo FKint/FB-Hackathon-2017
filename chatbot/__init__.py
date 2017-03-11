@@ -29,11 +29,17 @@ def send_message(recipient_id, message_text):
         log(r.text)
 
 
-# Dummy method - to be deleted
+# Dummy methods - to be deleted
 def get_active_friends():
     friends = ["Friend 1", "Friend 2", "Friend 3"]
 
     return friends
+
+def select_poll(user_id, poll_name):
+    if poll_name != "wrong_poll":
+        return None
+    else:
+        return "This should be an error"
 
 class Edi(object):
     def __init__(self):
@@ -53,6 +59,8 @@ class Edi(object):
             answer = self.create_poll(sender_id, message_text)
         elif action == Edi.ACTION_SHOW_ACTIVE_FRIENDS:
             answer = self.show_active_friends(sender_id, message_text)
+        elif action == Edi.ACTION_SELECT_POLL:
+            answer = self.select_poll(sender_id, message_text)
         # TODO: add other cases
 
         else:
@@ -75,7 +83,8 @@ class Edi(object):
         "info": ACTION_INTRODUCE_BOT,
         "hello": ACTION_INTRODUCE_BOT,
         "create poll": ACTION_CREATE_POLL,  # Only 1 prefix allowed for now
-        "show active friends": ACTION_SHOW_ACTIVE_FRIENDS
+        "show active friends": ACTION_SHOW_ACTIVE_FRIENDS,
+        "select poll": ACTION_SELECT_POLL
     }
 
     def get_action(self, message_text):
@@ -195,7 +204,21 @@ class Edi(object):
 
     def select_poll(self, sender_id, message_text):
         # <poll> selected
-        pass
+        parts = message_text.split()
+        if len(parts) != 3:
+            send_message(
+                sender_id,
+                "If you want me to select you a new poll, please send the following command: 'select poll <name>'"
+                "where name should be a string without whitespace.")
+            return
+
+        poll_name = parts[-1]
+
+        if select_poll(sender_id, poll_name) is None:
+            send_message(sender_id, "Poll successfully selected")
+        else:
+            send_message(sender_id, "Error occurred when trying to select the poll")
+
 
     def invite_friend(self, sender_id, message_text):
         # Confirm that <friend> has been added to <poll>

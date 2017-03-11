@@ -63,21 +63,31 @@ class Poll:
         """Collection of polls will look like this:
         {
         "poll_name": poll_name,
-        "admin_id" admin_id
+        "admin_id" admin_id,
+        "participants": [user_id_1, user_id_2, user_id_3, user_id_4]
+        }
+
+        Collection of selected polls will look like this:
+        {
+        "user_id": user_id,
+        "selected_poll": poll_name
         }
         """
         MONGODB_URI = "mongodb://heroku_f0s5338v:kurrih7o6a72idgjr2bf3c7g6d@ds129030.mlab.com:29030/heroku_f0s5338v"
         # MONGODB_URI = "mongodb://user:pass@mongoprovider.com:27409/rest"
         client = MongoClient(MONGODB_URI)
         self.db = client['polls'] # this gives the database
-        self.polls = db.polls # this gives the collection of polls (creates it)
+        self.polls = self.db.polls # this gives the collection of polls (+creates it)
+        self.selected_polls = self.db.selected_polls
+        self.app_users = self.db.users
 
     def create_poll(self, user_id, poll_name):
         """(returns an error message or None if succeeds)"""
         if self.polls.find_one({"poll_name": poll_name}):
             return "Error - the poll name is already used."
         poll = {"poll_name": poll_name,
-                "admin_id": user_id
+                "admin_id": user_id,
+                "participants": set([])
                }
         self.polls.insert_one(post)
 
@@ -85,30 +95,72 @@ class Poll:
         """Returns either True or False based on if the user with given
         user_id is an admin of the poll_name
         """
-        if self.polls.find_one({"poll_name": poll_name})
-        return True
+        poll_doc = self.polls.find_one({"poll_name": poll_name})
+        if poll_doc:
+            if poll_doc["admin_id"] == user_id:
+                return True
+            else:
+                return False
+        else:
+            return "Error - the poll does not exist."
 
     def select_poll(self, user_id, poll_name):
-        """(returns an error message or None if succeeds)"""
-        return None
-
-
+        """(returns an error message or None if succeeds)
+        we can have one selected poll per user - or change it?
+        """
+        # check if the poll exists
+        if not self.polls.find_one({"poll_name": poll_name}):
+            return "Error - the poll does not exist."
+        sel_pol_doc = self.selected_polls.find_one({"user_id": user_id})
+        # if the user already has something selected, change the poll name
+        if sel_pol_doc:
+            sel_pol_doc["poll_name"] = poll_name
+        else:
+            self.selected_polls.insert_one({"user_id": user_id,
+                                            "selected_poll": poll_name})
 
     def get_selected_poll(self, user_id):
         """(returns None or the name of the selected poll for that user)"""
-        return None
+        sel_pol_doc = self.selected_polls.find_one({"user_id": user_id})
+        if sel_pol_doc:
+            return sel_pol_doc["selected_poll"]
 
     def get_polls_for_user(self, sender_id):
         """returning a list of strings (the poll names where this user is
          active in, both as admin and as participant)
         """
+        poll_names = set([])
+        for poll in self.polls.find({"admin_id": sender_id}):
+            poll_names.add(poll["poll_name"])
 
-def invite_friend(user_id, poll_name, friend):
-    """returning an error message if user_id is not the admin of poll_name,
-    friend is not an active user of our application our friend
-    is not a FB friend of user_id
+        for poll in self.polls.find():
+            if sender_id in poll["participants"]:
+                poll_names.add(poll["poll_name"])
+        return list(poll_names)
+
+        # get all the polls where the user is admin
+
+    def invite_friend(user_id, poll_name, friend):
+        """returning an error message if user_id is not the admin of poll_name,
+        friend is not an active user of our application our friend
+        is not a FB friend of user_id
+        friend is given as an id number
+        """
+        if self.selected_polls.find_one({"poll_name": poll_name,
+                                         "admin_id": user_id}):
+            if
+            pass
+        else:
+            return "Error - there is not a poll with the user being an admin."
+
+        return None
+
+    def get_ranking(user_id, poll):
+    """ returning a list of dicts, each representing one song:
+    {artist: <str>, url: <str>, name: <str>} sorted by descending popularity.
+    Can return a string with the error message if the user is not a participant
+    of the poll or the poll does not exist.
     """
-    return None
 
 def get_active_friends(person_id):
     """This method returns the friends using the application

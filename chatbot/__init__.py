@@ -82,6 +82,28 @@ class Edi(object):
         else:
             send_message(sender_id, "I don't know what you mean. Send me 'help' if you want some help.")
 
+    def handle_postback(self, sender_id, postback):
+        payload = postback["payload"]
+        payload = json.loads(payload)
+
+        poll_id = payload["poll_id"]
+        song_id = payload["song_id"]
+        score = payload["score"]
+        action = payload["action"]
+
+        if action == "voting":
+            if score != 0 and score != 1:
+                send_message(sender_id, "I am sorry, please click a button")
+            else:
+                error = model.update_user_vote(user_id, poll_id, song_id, score)
+
+                if error is None:
+                    send_message(sender_id, "Thanks, your vote has been recorded!")
+                else:
+                    send_message(sender_id, "I am sorry, there was an error: " + error)
+        else:
+            send_message(sender_id, "Undefined action")
+
     ACTION_INTRODUCE_BOT = "ACTION_INTRODUCE_BOT"
     ACTION_SHOW_ACTIVE_FRIENDS = "ACTION_SHOW_ACTIVE_FRIENDS"
     ACTION_CREATE_POLL = "ACTION_CREATE_POLL"
@@ -329,7 +351,8 @@ class Edi(object):
                 "payload": json.dumps({
                     "song_id": "<REDACTED>",
                     "poll_id": "<REDACTED>",
-                    "score": 0
+                    "score": 0,
+                    "action": "voting"
                 })
             },
             {
@@ -338,7 +361,8 @@ class Edi(object):
                 "payload": json.dumps({
                     "song_id": "<REDACTED>",
                     "poll_id": "<REDACTED>",
-                    "score": 1
+                    "score": 1,
+                    "action": "voting"
                 })
             }
         ]

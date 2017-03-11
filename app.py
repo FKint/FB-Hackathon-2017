@@ -1,15 +1,9 @@
 import os
-import sys
 
 from flask import Flask, request
 
 import chatbot
-
-
-def log(message):  # simple wrapper for logging to stdout on heroku
-    print str(message)
-    sys.stdout.flush()
-
+from logs import log
 
 app = Flask(__name__)
 
@@ -60,7 +54,8 @@ def webhook():
                     pass
 
                 if messaging_event.get("postback"):  # user clicked/tapped "postback" button in earlier message
-                    pass
+                    log("Postback received")
+                    log(messaging_event)
 
     return "ok", 200
 

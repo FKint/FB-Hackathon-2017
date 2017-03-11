@@ -95,7 +95,7 @@ class Edi(object):
             if score != 0 and score != 1:
                 send_message(sender_id, "I am sorry, please click a button")
             else:
-                error = model.update_user_vote(user_id, poll_id, song_id, score)
+                error = model.update_user_vote(sender_id, poll_id, song_id, score)
 
                 if error is None:
                     send_message(sender_id, "Thanks, your vote has been recorded!")

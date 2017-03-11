@@ -1,15 +1,9 @@
 import os
-import sys
 
 from flask import Flask, request
 
 import chatbot
-
-
-def log(message):  # simple wrapper for logging to stdout on heroku
-    print str(message)
-    sys.stdout.flush()
-
+from logs import log
 
 app = Flask(__name__)
 

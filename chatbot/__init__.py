@@ -52,7 +52,7 @@ class Edi(object):
 
         action = self.get_action(message_text)
 
-        print "and action = " + action
+        print "and action = " + (action if action is not None else "")
         if action == Edi.ACTION_INTRODUCE_BOT:
             self.introduce_bot(sender_id, message_text)
         elif action == Edi.ACTION_CREATE_POLL:

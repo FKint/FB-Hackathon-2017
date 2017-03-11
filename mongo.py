@@ -72,6 +72,18 @@ class Poll:
         "user_id": user_id,
         "selected_poll": poll_name
         }
+
+        Collection of users of our app will be (user ids there):
+        {
+        "app_users": [1,2,4,5,6]
+        }
+        for now it will be only an array - it is better for now
+
+        Collection of friends will be:
+        {
+        "user_id": user_id,
+        "friends": [1,2,4,5,34]
+        }
         """
         MONGODB_URI = "mongodb://heroku_f0s5338v:kurrih7o6a72idgjr2bf3c7g6d@ds129030.mlab.com:29030/heroku_f0s5338v"
         # MONGODB_URI = "mongodb://user:pass@mongoprovider.com:27409/rest"
@@ -79,7 +91,10 @@ class Poll:
         self.db = client['polls'] # this gives the database
         self.polls = self.db.polls # this gives the collection of polls (+creates it)
         self.selected_polls = self.db.selected_polls
+        # in the worst case just hardcode the app user ids here
         self.app_users = self.db.users
+        self.app_users = []
+        self.friends = self.db.friends
 
     def create_poll(self, user_id, poll_name):
         """(returns an error message or None if succeeds)"""
@@ -140,7 +155,7 @@ class Poll:
 
         # get all the polls where the user is admin
 
-    def invite_friend(user_id, poll_name, friend):
+    def invite_friend(self, user_id, poll_name, friend):
         """returning an error message if user_id is not the admin of poll_name,
         friend is not an active user of our application our friend
         is not a FB friend of user_id
@@ -148,12 +163,14 @@ class Poll:
         """
         if self.selected_polls.find_one({"poll_name": poll_name,
                                          "admin_id": user_id}):
-            if
-            pass
-        else:
-            return "Error - there is not a poll with the user being an admin."
-
-        return None
+            if friend in self.app_users:
+                if friend in self.friends.find_one({"user_id": user_id})["friends"]:
+                    # update the field of participants for the poll
+                    participants = self.polls.find_one({"poll_name": poll_name})["participants"]
+                    participants.append(friend)
+                    # now update the list of participants in the collection of polls for the given poll
+                    self.polls.update_one({"poll_name": poll_name}, {'$set': {'participants': participants}})
+        return "Error - not admin, not user or not friend."
 
     def get_ranking(user_id, poll):
     """ returning a list of dicts, each representing one song:

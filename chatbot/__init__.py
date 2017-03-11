@@ -49,18 +49,24 @@ class Edi(object):
         print "handle message..."
         print "sender_id = " + sender_id
         print "message_text = " + message_text
-        
+
         action = self.get_action(message_text)
 
         print "and action = " + action
         if action == Edi.ACTION_INTRODUCE_BOT:
             self.introduce_bot(sender_id, message_text)
         elif action == Edi.ACTION_CREATE_POLL:
-            answer = self.create_poll(sender_id, message_text)
+            self.create_poll(sender_id, message_text)
         elif action == Edi.ACTION_SHOW_ACTIVE_FRIENDS:
-            answer = self.show_active_friends(sender_id, message_text)
+            self.show_active_friends(sender_id, message_text)
         elif action == Edi.ACTION_SELECT_POLL:
-            answer = self.select_poll(sender_id, message_text)
+            self.select_poll(sender_id, message_text)
+        elif action == Edi.ACTION_SHOW_POLL:
+            self.show_poll(sender_id, message_text)
+        elif action == Edi.ACTION_SHOW_POLLS_LIST:
+            self.show_polls_list(sender_id, message_text)
+        elif action == Edi.ACTION_INVITE_FRIEND:
+            self.invite_friend(sender_id, message_text)
         # TODO: add other cases
 
         else:
@@ -84,7 +90,8 @@ class Edi(object):
         "hello": ACTION_INTRODUCE_BOT,
         "create poll": ACTION_CREATE_POLL,  # Only 1 prefix allowed for now
         "show active friends": ACTION_SHOW_ACTIVE_FRIENDS,
-        "select poll": ACTION_SELECT_POLL
+        "select poll": ACTION_SELECT_POLL,
+        "show poll": ACTION_SHOW_POLL
     }
 
     def get_action(self, message_text):
@@ -202,6 +209,23 @@ class Edi(object):
             "You can select another poll by sending me 'select <poll>', where <poll> is the name of the poll."
         )
 
+    def show_polls_list(self, sender_id, message_text):
+        polls = model.get_polls_for_user(sender_id)
+        if len(polls) == 0:
+            send_message(
+                sender_id,
+                "You are not participating in any poll."
+            )
+        else:
+            send_message(
+                sender_id,
+                "You are active in the following polls: {}".format(", ".join(polls))
+            )
+        send_message(
+            sender_id,
+            "You can select another poll by sending me 'select <poll>', where <poll> is the name of the poll."
+        )
+
     def select_poll(self, sender_id, message_text):
         # <poll> selected
         parts = message_text.split()
@@ -222,7 +246,38 @@ class Edi(object):
 
     def invite_friend(self, sender_id, message_text):
         # Confirm that <friend> has been added to <poll>
-        pass
+        active_poll = model.get_selected_poll(sender_id)
+        if active_poll is None:
+            send_message(
+                sender_id,
+                "You haven't selected a poll. Try 'show all polls' and 'select <poll>' to select a poll."
+            )
+            return
+        parts = message_text.split()
+        if len(parts) < 2:
+            send_message(
+                sender_id,
+                "Please add your friend's name: 'invite <friend>'."
+            )
+            return
+        friend = " ".join(parts[1:])
+        if not model.is_admin_of_poll(sender_id, active_poll):
+            send_message(
+                sender_id,
+                "I'm sorry, but I will only add participants if the admin asks me."
+            )
+            return
+        error = model.invite_friend(sender_id, active_poll, friend)
+        if error is not None:
+            send_message(
+                sender_id,
+                "I couldn't add your friend, please check it's not an imaginary friend of yours ;)"
+            )
+            return
+        send_message(
+            sender_id,
+            "I added your friend to the poll!"
+        )
 
     def suggest_song(self, sender_id, message_text):
         # Confirm that <song> has been added to <poll>

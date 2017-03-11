@@ -29,16 +29,30 @@ def send_message(recipient_id, message_text):
         log(r.text)
 
 
+# Dummy method - to be deleted
+def get_active_friends():
+    friends = ["Friend 1", "Friend 2", "Friend 3"]
+
+    return friends
+
 class Edi(object):
     def __init__(self):
         pass
 
     def handle_message(self, sender_id, message_text):
+        print "handle message..."
+        print "sender_id = " + sender_id
+        print "message_text = " + message_text
+        
         action = self.get_action(message_text)
+
+        print "and action = " + action
         if action == Edi.ACTION_INTRODUCE_BOT:
             answer = self.introduce_bot(sender_id, message_text)
         elif action == Edi.ACTION_CREATE_POLL:
             answer = self.create_poll(sender_id, message_text)
+        elif action == Edi.ACTION_SHOW_ACTIVE_FRIENDS:
+            answer = self.show_active_friends(sender_id, message_text)
         # TODO: add other cases
 
         else:
@@ -68,7 +82,8 @@ class Edi(object):
             "help": Edi.ACTION_INTRODUCE_BOT,
             "info": Edi.ACTION_INTRODUCE_BOT,
             "hello": Edi.ACTION_INTRODUCE_BOT,
-            "create poll": Edi.ACTION_CREATE_POLL
+            "create poll": Edi.ACTION_CREATE_POLL,
+            "show active friends": Edi.ACTION_SHOW_ACTIVE_FRIENDS
         }
         for prefix in prefix_actions:
             if message_text.startswith(prefix):
@@ -86,7 +101,13 @@ class Edi(object):
 
     def show_active_friends(self, sender_id, message_text):
         # List of all Messenger contacts that can be invited
-        pass
+        activeFriends = get_active_friends()
+
+        messageContent = "The friends that can be invited are:\n"
+        for friend in activeFriends:
+            messageContent += friend + "\n"
+
+        send_message(sender_id, messageContent)
 
     def create_poll(self, sender_id, message_text):
         # Create + confirm

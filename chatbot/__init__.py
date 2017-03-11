@@ -322,20 +322,19 @@ class Edi(object):
         # No song available: suggest a song?
 
         message = "Please vot for this song"
-        buttons = [ 
-        {
-            "type":"postback",
-            "title":"Vote option",
-            "payload": 1
-        }]
-        
-        
+        buttons = [
+            {
+                "type": "postback",
+                "title": "Vote option",
+                "payload": "1"
+            }
+        ]
+
         send_message(
             sender_id,
             message,
             buttons
         )
-            
 
     def vote_song_option(self, sender_id, message_text):
         # Apply vote

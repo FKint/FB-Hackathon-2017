@@ -133,7 +133,7 @@ class Edi(object):
         elif action == Edi.ACTION_SHOW_RANKING:
             self.show_ranking(sender_id, "")
         elif action == Edi.ACTION_INVITE_FRIEND:
-            user_id = payload["user_id"]
+            user_id = payload["user_name"]
             self.invite_friend(sender_id, "invite {}".format(user_id))
         elif action == Edi.ACTION_SELECT_POLL:
             poll_name = payload["poll_name"]
@@ -271,7 +271,7 @@ class Edi(object):
                        "type": "postback",
                        "title": "Invite {}".format(friend['display_name']),
                        "payload": json.dumps({
-                           "user_id": friend['user_id'],
+                           "user_name": friend['display_name'],
                            "score": 1,
                            "action": Edi.ACTION_INVITE_FRIEND
                        })

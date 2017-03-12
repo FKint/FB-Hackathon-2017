@@ -138,7 +138,8 @@ class Edi(object):
         "invite": ACTION_INVITE_FRIEND,
         "show all polls": ACTION_SHOW_POLLS_LIST,
         "show ranking": ACTION_SHOW_RANKING,
-        "show participants": ACTION_SHOW_POLL_PARTICIPANTS
+        "show participants": ACTION_SHOW_POLL_PARTICIPANTS,
+        "suggest": ACTION_SUGGEST_SONG
     }
 
     def get_action(self, message_text):

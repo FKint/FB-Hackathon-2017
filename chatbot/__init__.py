@@ -43,7 +43,7 @@ def send_message(recipient_id, message_text, buttons=None):
 
     log(data)
 
-    r = requests.post("https://graph.facebook.com/v2.6/me/messages", params=params, headers=headers, data=data)
+    r = requests.post("https://graph.facebook.com/v2.8/me/messages", params=params, headers=headers, data=data)
     if r.status_code != 200:
         log("ERROR SENDING TO FB!")
         log(r.status_code)

@@ -178,7 +178,8 @@ class Model:
                 official_friend_name = actual_friend_name
         if official_friend_name is None:
             return "Error - No valid friend found"
-        friend = self.user_data.find_one({"name": friend_name})
+        log("Found friend with name {}".format(official_friend_name))
+        friend = self.user_data.find_one({"name": official_friend_name})
         if friend is None:
             return "Friend is not using the bot!"
 

@@ -276,7 +276,7 @@ class Edi(object):
                            "action": Edi.ACTION_INVITE_FRIEND
                        })
                    } for friend in all_friends if friend['user_id'] in friend_ids
-                   ][:5]
+                   ][:3]
 
 
     def send_poll_help(self, sender_id, poll_name):
@@ -369,7 +369,7 @@ class Edi(object):
                            "poll_name": x
                        })
                    } for x in model.get_polls_for_user(user_id) if exception != x
-                   ][:5]
+                   ][:3]
 
 
     def show_polls_list(self, sender_id, message_text):

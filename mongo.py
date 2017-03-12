@@ -48,7 +48,7 @@ class Model:
         "participants": [user_id_1, user_id_2, user_id_3, user_id_4]
         "songs": [{"artist": "ad", "name": "a2", "uri": "fg@sf", "score":0},
                   {"artist": "ad2", "name": "a22", "uri": "fg@s2f", "score":0}}],
-        "participant_statuses": {"user12": "waiting", "user324": "waiting"}
+        "participant_states": {"user12": "waiting", "user324": "waiting"}
         }
 
         Collection of selected polls will look like this:
@@ -106,7 +106,7 @@ class Model:
                 "admin_id": user_id,
                 "participants": [user_id],
                 "songs": [],
-                "participant_statuses": {}
+                "participant_states": {}
                 }
         self.polls.insert_one(poll)
 
@@ -268,13 +268,13 @@ class Model:
         """updates the state of the user with user_id
         within the poll with poll_id to state
         """
-        poll_participant_statuses = self.polls.find_one({"poll_name": poll_id})["participant_statuses"]
-        poll_participant_statuses[user_id] = state
+        poll_participant_states = self.polls.find_one({"poll_name": poll_id})["participant_states"]
+        poll_participant_states[user_id] = state
         self.polls.update({
             "poll_name": poll_id
         }, {
             "$set": {
-                "participant_statuses": poll_participant_statuses
+                "participant_states": poll_participant_states
             }
         })
 
@@ -284,6 +284,6 @@ class Model:
         within the poll with poll_id
         """
         try:
-            return self.polls.find_one({"poll_name": poll_id})["participant_statuses"][user_id]
+            return self.polls.find_one({"poll_name": poll_id})["participant_states"][user_id]
         except:
             return "Error - either poll_id or user_id is wrong"

@@ -362,7 +362,8 @@ class Edi(object):
                 )
                 return
             if not confirmed:
-                message = "Is this the suggestion you want to make?"
+                artist, title, uri = spotify.track_name.get_metadata(song_id)
+                message = "Is {} by {} the suggestion you want to make?".format(title, artist)
                 buttons = [
                     {
                         "type": "postback",

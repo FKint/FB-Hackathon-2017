@@ -79,7 +79,7 @@ class Model:
         }
         """
         MONGODB_URI = os.environ['MONGODB_URI']
-        self.db = MongoClient(MONGODB_URI)
+        self.db = MongoClient(MONGODB_URI).database
         self.polls = self.db.polls  # this gives the collection of polls (+creates it)
         self.user_data = self.db.user_data
         # in the worst case just hardcode the app user ids here

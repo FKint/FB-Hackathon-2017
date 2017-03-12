@@ -100,12 +100,13 @@ class Edi(object):
         payload = postback["payload"]
         payload = json.loads(payload)
 
-        poll_id = payload["poll_id"]
-        song_id = payload["song_id"]
-        score = payload["score"]
         action = payload["action"]
 
         if action == "voting":
+
+            poll_id = payload["poll_id"]
+            song_id = payload["song_id"]
+            score = payload["score"]
             model.set_user_state(poll_id, sender_id, "voted")
             if score != 0 and score != 1:
                 send_message(sender_id, "I am sorry, please click a button")
@@ -117,8 +118,21 @@ class Edi(object):
                 else:
                     send_message(sender_id, "I am sorry, there was an error: " + error)
         elif action == "confirming":
+
+            poll_id = payload["poll_id"]
+            song_id = payload["song_id"]
+            score = payload["score"]
             if score == 1:
                 self.suggest_song(sender_id, spotify.track_name.id_to_url(song_id), confirmed=True)
+        elif action == Edi.ACTION_SHOW_ACTIVE_FRIENDS:
+            self.show_active_friends(sender_id, "")
+        elif action == Edi.ACTION_SHOW_POLLS_LIST:
+            self.show_polls_list(sender_id, "")
+        elif action == Edi.ACTION_SHOW_POLL_PARTICIPANTS:
+            poll_id = payload["poll_id"]
+            self.show_poll_participants(sender_id, "show poll " + poll_id)
+        elif action == Edi.ACTION_SHOW_RANKING:
+            self.show_ranking(sender_id, "")
         else:
             send_message(sender_id, "Undefined action")
 
@@ -171,8 +185,21 @@ class Edi(object):
         send_message(sender_id, "Hello, I'm Edi. I will help you vote on playlists with your friends using our polls.")
         send_message(sender_id,
                      "Send me 'create poll roadtrip' to create a new playlist called 'roadtrip'.")
-        send_message(sender_id, "Send me 'show all polls' to see a list of all current polls.")
-        send_message(sender_id, "Send me 'show active friends' to get a list of all your friends that use me.")
+        send_message(sender_id, "Send me 'show all polls' to see a list of all current polls."
+                                "Send me 'show active friends' to get a list of all your friends that use me.",
+                     buttons=[{
+                         "type": "postback",
+                         "title": "Show all polls",
+                         "payload": json.dumps({
+                             "action": Edi.ACTION_SHOW_POLLS_LIST
+                         })
+                     }, {
+                         "type": "postback",
+                         "title": "Show active friends",
+                         "payload": json.dumps({
+                             "action": Edi.ACTION_SHOW_ACTIVE_FRIENDS
+                         })
+                     },])
 
     def show_active_friends(self, sender_id, message_text):
         # List of all Messenger contacts that can be invited

@@ -50,10 +50,9 @@ def get_metadata(id):
     sp = spotipy.Spotify()
     track = sp.track(id)
     if track:
-        print(track)
-        artist = str(track['artists'][0]['name'])
-        uri = str(track['uri'])
-        name = str(track['name'])
+        artist = track['artists'][0]['name'].encode('utf-8')
+        uri = track['uri']
+        name = track['name'].encode('utf-8')
     return artist, name, uri
 
 #print check_track_with_url("https://open.spotify.com/track/3ZFTkvIE7kyPt6Nu3PEa7V")

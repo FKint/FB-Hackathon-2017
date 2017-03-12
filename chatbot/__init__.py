@@ -520,6 +520,8 @@ class Edi(object):
                              "An error happened, sorry: {}".format(participants))
 
     def export_list(self, sender_id, message_text):
+        send_message(sender_id, "Unfortunately this functionality is not ready yet!")
+        return
         poll = model.get_selected_poll(sender_id)
         if poll is None:
             self.write_no_poll_selected(sender_id)

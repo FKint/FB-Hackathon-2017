@@ -81,7 +81,7 @@ class Edi(object):
         elif action == Edi.ACTION_SUGGEST_SONG:
             self.suggest_song(sender_id, message_text)
         # TODO: add other cases
-        elif spotify.track_name.get_track_from_message(message_text) is not None:
+        elif spotify.track_name.check_track_with_url(message_text) is not None:
             log("Recognizes spotify URL")
             self.suggest_song(sender_id, message_text)
         else:
@@ -328,7 +328,8 @@ class Edi(object):
         # Show picture of the song
         if message_text.startswith("suggest "):
             message_text = message_text[len("suggest: "):]
-        song_id = spotify.track_name.get_track_from_message(message_text)
+        # TODO: also check other forms of queries
+        song_id = spotify.track_name.check_track_with_url(message_text)
         if song_id is None:
             send_message(
                 sender_id,
@@ -366,7 +367,6 @@ class Edi(object):
                 )
 
                 model.set_user_state(poll, participant["user_id"], "waiting")
-
 
     def show_ranking(self, sender_id, message_text):
         # Show top 10 songs

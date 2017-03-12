@@ -1,5 +1,5 @@
 import re
-import urllib
+
 import spotipy
 
 
@@ -11,13 +11,14 @@ def check_track_with_url(message):
     sp = spotipy.Spotify()
     # look for string containing track and an id
     if "spotify.com" in message:
-        pattern = re.search("track/(\w+)\W*",message)
+        pattern = re.search("track/(\w+)\W*", message)
         if pattern:
-            res=pattern.group(1)
+            res = pattern.group(1)
             return sp.track(res)['uri']
     return None
 
-def search_for_name_and_artist(w1,w2):
+
+def search_for_name_and_artist(w1, w2):
     sp = spotipy.Spotify()
     results = sp.search(q='artist:' + w1, type='artist')
     items = results['artists']['items']
@@ -25,34 +26,34 @@ def search_for_name_and_artist(w1,w2):
         if artist["name"] == w1:
             tracks = sp.artist_top_tracks(artist["uri"])
             for track in tracks['tracks']:
-                a=re.sub("\W+", "", w2).lower()
-                b=re.sub("\W+", "", track['name']).lower()
+                a = re.sub("\W+", "", w2).lower()
+                b = re.sub("\W+", "", track['name']).lower()
                 if a in b or b in a:
                     return track['external_urls']['spotify']
     return None
 
-def check_track_with_keywords(message):               
+
+def check_track_with_keywords(message):
     """ look for track with artist name or song name
     Returns url
     """
 
     ww = message.split('-')
-    
-    if len(ww) !=2:
+
+    if len(ww) != 2:
         return None
 
     w1 = ww[0].strip()
     w2 = ww[1].strip()
     print w1
     print w2
-    x = search_for_name_and_artist(w1,w2)
+    x = search_for_name_and_artist(w1, w2)
     if x:
-        
         return x
 
-    #do the same thing for artist and name in opposite order
+    # do the same thing for artist and name in opposite order
 
-    return search_for_name_and_artist(w2,w1)
+    return search_for_name_and_artist(w2, w1)
 
 
 def get_metadata(id):
@@ -65,8 +66,8 @@ def get_metadata(id):
         artist = track['artists'][0]['name']
         uri = track['uri']
         name = track['name']
-    return (artist,name,uri)
+    return artist, name, uri
 
-#print check_track_with_url("https://open.spotify.com/track/3ZFTkvIE7kyPt6Nu3PEa7V")
-#print check_track_with_keywords("Frank Sinatra - Young at Heart ")
-#print get_metadata("3ZFTkvIE7kyPt6Nu3PEa7V")
+    # print check_track_with_url("https://open.spotify.com/track/3ZFTkvIE7kyPt6Nu3PEa7V")
+    # print check_track_with_keywords("Frank Sinatra - Young at Heart ")
+    # print get_metadata("3ZFTkvIE7kyPt6Nu3PEa7V")

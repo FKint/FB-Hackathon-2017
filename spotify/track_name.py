@@ -25,12 +25,18 @@ def check_track_with_url_or_id(message):
         return from_url
     message = message.strip()
     sp = spotipy.Spotify()
-    track = sp.track(message)
-    if track is not None:
-        return message
+    try:
+        track = sp.track(message)
+        if track is not None:
+            return message
+    except:
+        pass
     if message.startswith("spotify:track:"):
-        track_id = message[len("spotify:track"):]
-        track = sp.track(track_id)
+        try:
+            track_id = message[len("spotify:track"):]
+            track = sp.track(track_id)
+        except:
+            pass
         if track is not None:
             return track_id
     return None

@@ -42,6 +42,7 @@ def check_track_with_keywords(message):
     
     if len(ww) !=2:
         return None
+        
     w1 = ww[0].strip()
     w2 = ww[1].strip()
     x = search_for_name_and_artist(w1,w2)
@@ -66,5 +67,5 @@ def get_metadata(id):
     return (artist,name,uri)
 
 #get_track_from_message("https://open.spotify.com/track/3ZFTkvIE7kyPt6Nu3PEa7V")
-print check_track_with_keywords("Frank Sinatra ")
+#print check_track_with_keywords("Frank Sinatra ")
 #print get_metadata("3ZFTkvIE7kyPt6Nu3PEa7V")

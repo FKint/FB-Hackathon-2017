@@ -344,6 +344,14 @@ class Edi(object):
         song_id = spotify.track_name.check_track_with_url(message_text)
         if song_id is None:
             # Try to find it based on keywords
+
+            if "-" not in message_text:
+                send_message(
+                    sender_id,
+                    "Please follow the format <artist> - <song name> (include a '-' between the artist and the song name)"
+                )
+                return
+                
             song_id = spotify.track_name.check_track_with_keywords(message_text)
             if song_id is None:
                 send_message(

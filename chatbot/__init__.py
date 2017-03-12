@@ -135,9 +135,11 @@ class Edi(object):
         elif action == Edi.ACTION_INVITE_FRIEND:
             user_id = payload["user_id"]
             self.invite_friend(sender_id, "invite {}".format(user_id))
-        elif action == Edi.ACTION_SHOW_POLL:
+        elif action == Edi.ACTION_SELECT_POLL:
             poll_name = payload["poll_name"]
-            self.show_poll(sender_id, "show poll {}".format(poll_name))
+            self.select_poll(sender_id, "select poll {}".format(poll_name))
+        elif action == Edi.ACTION_SHOW_POLL:
+            self.show_poll(sender_id, "")
         else:
             send_message(sender_id, "Undefined action")
 

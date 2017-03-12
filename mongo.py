@@ -224,7 +224,7 @@ class Model:
            None on success or a string with an
            error message when something goes wrong.
         """
-        poll = self.polls.find_one({"poll_name": poll_id, "admin_id": user_id})
+        poll = self.polls.find_one({"poll_name": poll_id})
         if poll is None:
             return "Error - No such poll found"
         if song_id in map(lambda x: x['song_id'], poll['songs']):

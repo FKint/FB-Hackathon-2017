@@ -319,6 +319,7 @@ class Model:
         # check if they have not added the song themselves
         if user_id == poll["songs"]["suggested_by"]:
             return "Error - the song was added by this user."
+        log("Finding song {} in {}".format(song_id, poll['songs']))
         for song in poll["songs"]:
             if song["song_id"] == song_id:
                 song["votes"][user_id] = score

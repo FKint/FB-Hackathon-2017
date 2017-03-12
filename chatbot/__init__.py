@@ -114,7 +114,8 @@ class Edi(object):
                 error = model.update_user_vote(sender_id, poll_id, song_id, score)
 
                 if error is None:
-                    send_message(sender_id, "Thanks, your vote has been recorded!")
+                    send_message(sender_id, "Thanks, your vote has been recorded!",
+                                 buttons=[self.get_ranking_button(sender_id, poll_id)])
                 else:
                     send_message(sender_id, "I am sorry, there was an error: " + error)
         elif action == "confirming":
@@ -278,6 +279,14 @@ class Edi(object):
                    } for friend in all_friends if friend['user_id'] in friend_ids
                    ][:3]
 
+    def get_ranking_button(self, user_id, poll_name):
+        return {
+            "type": "postback",
+            "title": "Show ranking",
+            "payload": json.dumps({
+                "action": Edi.ACTION_SHOW_RANKING
+            })
+        }
 
     def send_poll_help(self, sender_id, poll_name):
         if model.is_admin_of_poll(sender_id, poll_name):
@@ -302,13 +311,7 @@ class Edi(object):
                     "payload": json.dumps({
                         "action": Edi.ACTION_SHOW_POLL_PARTICIPANTS
                     })
-                }, self.get_show_song_button(), {
-                    "type": "postback",
-                    "title": "Show ranking",
-                    "payload": json.dumps({
-                        "action": Edi.ACTION_SHOW_RANKING
-                    })
-                },
+                }, self.get_show_song_button(), self.get_ranking_button(sender_id, poll_name=poll_name),
             ]
         )
         send_message(
@@ -316,7 +319,6 @@ class Edi(object):
             "You can suggest a new song for this poll by sending me 'suggest <song>', where "
             "song can be a Spotify song ID, URI or a search string."
         )
-
 
     def get_show_song_button(self):
         return {
@@ -326,7 +328,6 @@ class Edi(object):
                 "action": Edi.ACTION_SHOW_SONG_OPTION
             })
         }
-
 
     def show_poll(self, sender_id, message_text):
         # Which is the currently active poll, how to switch polls, how to see all polls
@@ -358,7 +359,6 @@ class Edi(object):
                     ]
         )
 
-
     def get_poll_select_buttons(self, user_id, exception=None):
         return [
                    {
@@ -370,7 +370,6 @@ class Edi(object):
                        })
                    } for x in model.get_polls_for_user(user_id) if exception != x
                    ][:3]
-
 
     def show_polls_list(self, sender_id, message_text):
         polls = model.get_polls_for_user(sender_id)
@@ -391,7 +390,6 @@ class Edi(object):
             buttons=self.get_poll_select_buttons(sender_id)
         )
 
-
     def select_poll(self, sender_id, message_text):
         # <poll> selected
         parts = message_text.split()
@@ -409,13 +407,14 @@ class Edi(object):
             send_message(sender_id,
                          "Poll successfully selected. If you send me 'show song', "
                          "I'll offer you a random song that you stil need to vote for! \n"
-                         "You can suggest new songs with 'suggest <query>' or by sending a Spotify URL.",
+                         "You can suggest new songs with 'suggest <query>' or by sending a Spotify URL. \n"
+                         "Send 'show ranking' to see the current standings.",
                          buttons=[
-                             self.get_show_song_button()
+                             self.get_show_song_button(),
+                             self.get_ranking_button(sender_id, poll_name)
                          ])
         else:
             send_message(sender_id, "Error occurred when trying to select the poll")
-
 
     def invite_friend(self, sender_id, message_text):
         # Confirm that <friend> has been added to <poll>
@@ -450,7 +449,6 @@ class Edi(object):
             sender_id,
             "I added your friend to the poll!"
         )
-
 
     def suggest_song(self, sender_id, message_text, confirmed=False):
         # Confirm that <song> has been added to <poll>
@@ -558,7 +556,6 @@ class Edi(object):
                 "An error happened, sorry :/"
             )
 
-
     def show_ranking(self, sender_id, message_text):
         # Show top 10 songs
         # Later: paginator: next 10
@@ -575,7 +572,6 @@ class Edi(object):
                          "Nb. {}: {} ({}) with {} votes".format(index, song['artist'] + " - " + song['title'],
                                                                 spotify.track_name.id_to_url(song['song_id']),
                                                                 song['score']))
-
 
     def show_song_option(self, sender_id, message_text):
         # Retrieve random song that user needs to vote for
@@ -624,7 +620,6 @@ class Edi(object):
             buttons
         )
 
-
     def show_poll_participants(self, sender_id, message_text):
         poll_id = model.get_selected_poll(sender_id)
 
@@ -640,7 +635,6 @@ class Edi(object):
             log(participants)
             send_message(sender_id,
                          "An error happened, sorry: {}".format(participants))
-
 
     def export_list(self, sender_id, message_text):
         send_message(sender_id, "Unfortunately this functionality is not ready yet!")

@@ -233,7 +233,7 @@ class Model:
         self.polls.update({
             "poll_name": poll_id
         }, {
-            "$insert": {
+            "$push": {
                 "songs": {
                     "song_id": song_id,
                     "title": title,

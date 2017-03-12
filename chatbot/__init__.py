@@ -337,7 +337,7 @@ class Edi(object):
         # Confirm that <song> has been added to <poll>
         # Show picture of the song
         if message_text.startswith("suggest "):
-            message_text = message_text[len("suggest: "):]
+            message_text = message_text[len("suggest "):]
 
         poll = model.get_selected_poll(sender_id)
         if poll is None:

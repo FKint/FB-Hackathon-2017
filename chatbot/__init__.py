@@ -437,10 +437,15 @@ class Edi(object):
             message = "The participants in poll " + (poll_id if poll_id is not None else "NONE") + " are:\n"
 
             participants = model.get_poll_participants(sender_id, poll_id)
-            for participant in participants:
-                message += participant["display_name"] + "\n"
+            if isinstance(participants, list):
+                for participant in participants:
+                    message += participant["display_name"] + "\n"
 
-            send_message(sender_id, message)
+                send_message(sender_id, message)
+            else:
+                log(participants)
+                send_message(sender_id,
+                             "An error happened, sorry: {}".format(participants))
 
     def vote_song_option(self, sender_id, message_text):
         # Apply vote

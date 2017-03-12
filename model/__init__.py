@@ -46,7 +46,7 @@ def get_ranking(user_id, poll_name):
 
 
 def update_user_vote(user_id, poll_id, song_id, score):
-    data_model.update_user_vote(user_id, poll_id, song_id, score)
+    return data_model.update_user_vote(user_id, poll_id, song_id, score)
 
 
 def get_poll_participants(user_id, poll_id):

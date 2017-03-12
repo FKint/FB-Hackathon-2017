@@ -316,12 +316,12 @@ class Model:
         # check if the user is participant in the poll
         if user_id not in poll["participants"]:
             return "Error - the user is not a participant in the poll."
-        # check if they have not added the song themselves
-        if user_id == poll["songs"]["suggested_by"]:
-            return "Error - the song was added by this user."
         log("Finding song {} in {}".format(song_id, poll['songs']))
         for song in poll["songs"]:
             if song["song_id"] == song_id:
+                # check if they have not added the song themselves
+                if user_id == song["suggested_by"]:
+                    return "Error - the song was added by this user."
                 song["votes"][user_id] = score
                 self.polls.update_one({
                     "poll_name": poll_id

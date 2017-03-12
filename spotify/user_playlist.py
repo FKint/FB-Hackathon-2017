@@ -33,7 +33,7 @@ class PlaylistHandler:
             self.sp.user_playlist_add_tracks(self.user_id, self.playlist_id, track_ids)
             log("added song to playlist")
 
-
-#ph = PlaylistHandler()
-#track_url = ["0xBsZrUrsZcCCrpxryZDHc"]
-#ph.add_to_playlist(track_url)
+if __name__ == "__main__":
+    ph = PlaylistHandler()
+    track_url = ["0xBsZrUrsZcCCrpxryZDHc"]
+    ph.add_to_playlist(track_url)

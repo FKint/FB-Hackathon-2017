@@ -215,7 +215,7 @@ class Model:
         for friend in facebook_friends:
             friend_data = self.user_data.find_one({"user_id": friend})
             if friend_data is not None:
-                active_friends.append({"user_id": friend, "display_name": friend['name']})
+                active_friends.append({"user_id": friend, "display_name": friend_data['name']})
         return active_friends
 
     def suggest_song(self, user_id, poll_id, song_id):

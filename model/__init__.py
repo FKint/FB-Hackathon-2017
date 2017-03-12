@@ -46,10 +46,7 @@ def get_ranking(user_id, poll_name):
 
 
 def update_user_vote(user_id, poll_id, song_id, score):
-    if score == 1:
-        return None
-    else:
-        return "ERROR - the score is 0"
+    data_model.update_user_vote(user_id, poll_id, song_id, score)
 
 
 def get_poll_participants(user_id, poll_id):

@@ -70,3 +70,6 @@ def set_user_state(poll, user, state):
 def get_user_state(poll, user):
     return user_state[poll][user]
 
+
+def get_song_option(user_id, poll_id):
+    return "7aIjefMJSpmNVivRcS1unF"

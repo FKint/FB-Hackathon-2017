@@ -483,6 +483,38 @@ class Edi(object):
                 buttons
             )
 
+        artist, title, uri = spotify.track_name.get_metadata(song_id)
+        # TODO: Try to add a nice preview
+        message = "What do you think of {} by {}? {}".format(title, artist, spotify.track_name.id_to_url(song_id))
+        buttons = [
+            {
+                "type": "postback",
+                "title": "Dislike",
+                "payload": json.dumps({
+                    "song_id": song_id,
+                    "poll_id": poll_id,
+                    "score": 0,
+                    "action": "voting"
+                })
+            },
+            {
+                "type": "postback",
+                "title": "Like",
+                "payload": json.dumps({
+                    "song_id": song_id,
+                    "poll_id": poll_id,
+                    "score": 1,
+                    "action": "voting"
+                })
+            }
+        ]
+
+        send_message(
+            sender_id,
+            message,
+            buttons
+        )
+
     def show_poll_participants(self, sender_id, message_text):
         if len(message_text.split()) != 2:
             send_message(sender_id, "I am sorry, the option format must be 'show participants'")

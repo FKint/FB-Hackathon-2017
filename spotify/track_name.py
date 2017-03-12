@@ -9,14 +9,12 @@ def check_track_with_url(message):
     """
 
     sp = spotipy.Spotify()
-    print sp.track(message)
     # look for string containing track and an id
     if "spotify.com" in message:
         pattern = re.search("track/(\w+)\W*",message)
         if pattern:
             res=pattern.group(1)
-            if sp.tracks([res])['tracks']!=[None]:
-                return res
+            return sp.track(res)['uri']
     return None
 
 def search_for_name_and_artist(w1,w2):
@@ -42,11 +40,14 @@ def check_track_with_keywords(message):
     
     if len(ww) !=2:
         return None
-        
+
     w1 = ww[0].strip()
     w2 = ww[1].strip()
+    print w1
+    print w2
     x = search_for_name_and_artist(w1,w2)
     if x:
+        
         return x
 
     #do the same thing for artist and name in opposite order
@@ -61,11 +62,11 @@ def get_metadata(id):
     sp = spotipy.Spotify()
     track = sp.track(id)
     if track:
-        artist = sp.track("3ZFTkvIE7kyPt6Nu3PEa7V")['artists'][0]['name']
-        uri = sp.track(id)['uri']
-        name = sp.track(id)['name']
+        artist = track['artists'][0]['name']
+        uri = track['uri']
+        name = track['name']
     return (artist,name,uri)
 
-#get_track_from_message("https://open.spotify.com/track/3ZFTkvIE7kyPt6Nu3PEa7V")
-#print check_track_with_keywords("Frank Sinatra ")
+#print check_track_with_url("https://open.spotify.com/track/3ZFTkvIE7kyPt6Nu3PEa7V")
+#print check_track_with_keywords("Frank Sinatra - Young at Heart ")
 #print get_metadata("3ZFTkvIE7kyPt6Nu3PEa7V")

@@ -4,5 +4,5 @@ from chatbot import Edi
 
 if __name__ == "__main__":
     e = Edi()
-    query = "select poll wrong_poll"
+    query = "show participants"
     e.handle_message(os.environ["USER_ID"], query)

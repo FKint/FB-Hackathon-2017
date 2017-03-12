@@ -368,6 +368,16 @@ class Edi(object):
                 buttons = [
                     {
                         "type": "postback",
+                        "title": "Yes",
+                        "payload": json.dumps({
+                            "song_id": song_id,
+                            "poll_id": poll,
+                            "score": 1,
+                            "action": "confirming"
+                        })
+                    },
+                    {
+                        "type": "postback",
                         "title": "No",
                         "payload": json.dumps({
                             "song_id": song_id,
@@ -376,16 +386,6 @@ class Edi(object):
                             "action": "confirming"
                         })
                     },
-                    {
-                        "type": "postback",
-                        "title": "Yes",
-                        "payload": json.dumps({
-                            "song_id": song_id,
-                            "poll_id": poll,
-                            "score": 1,
-                            "action": "confirming"
-                        })
-                    }
                 ]
 
                 send_message(
@@ -473,6 +473,15 @@ class Edi(object):
         buttons = [
             {
                 "type": "postback",
+                "title": "Like",
+                "payload": json.dumps({
+                    "song_id": song_id,
+                    "poll_id": poll_id,
+                    "score": 1,
+                    "action": "voting"
+                })
+            }, {
+                "type": "postback",
                 "title": "Dislike",
                 "payload": json.dumps({
                     "song_id": song_id,
@@ -481,16 +490,6 @@ class Edi(object):
                     "action": "voting"
                 })
             },
-            {
-                "type": "postback",
-                "title": "Like",
-                "payload": json.dumps({
-                    "song_id": song_id,
-                    "poll_id": poll_id,
-                    "score": 1,
-                    "action": "voting"
-                })
-            }
         ]
 
         send_message(

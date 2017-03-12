@@ -469,9 +469,7 @@ class Edi(object):
         artist, title, uri = spotify.track_name.get_metadata(song_id)
         url = spotify.track_name.id_to_url(song_id)
 
-        message = "What do you think of {} by {}? {}. Find it here {}.".format(title, artist,
-                                                                               spotify.track_name.id_to_url(song_id),
-                                                                               url)
+        message = "What do you think of {} by {}? Find it here {}.".format(title, artist, url)
         buttons = [
             {
                 "type": "postback",

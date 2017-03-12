@@ -58,10 +58,7 @@ class Edi(object):
         log(message_text)
         action = self.get_action(message_text)
         log("ACTION: {}".format(action))
-        if spotify.track_name.get_track_from_message(message_text) is not None:
-            log("Recognizes spotify URL")
-            self.suggest_song(sender_id, message_text)
-        elif action == Edi.ACTION_INTRODUCE_BOT:
+        if action == Edi.ACTION_INTRODUCE_BOT:
             self.introduce_bot(sender_id, message_text)
         elif action == Edi.ACTION_CREATE_POLL:
             self.create_poll(sender_id, message_text)
@@ -84,7 +81,9 @@ class Edi(object):
         elif action == Edi.ACTION_SUGGEST_SONG:
             self.suggest_song(sender_id, message_text)
         # TODO: add other cases
-
+        elif spotify.track_name.get_track_from_message(message_text) is not None:
+            log("Recognizes spotify URL")
+            self.suggest_song(sender_id, message_text)
         else:
             send_message(sender_id, "I don't know what you mean. Send me 'help' if you want some help.")
 

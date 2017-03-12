@@ -32,7 +32,7 @@ def send_message(recipient_id, message_text, buttons=None):
                 "type": "template",
                 "payload": {
                     "template_type": "button",
-                    "text": "Click me",
+                    "text": message_text,
                     "buttons": buttons,
                 }
             }
@@ -403,7 +403,6 @@ class Edi(object):
             send_message(
                 sender_id,
                 "You haven't selected a poll. Try 'show all polls' and 'select poll <poll>' to select a poll."
-
             )
             return
         song_id = model.get_song_option(sender_id, poll_id)
@@ -412,7 +411,7 @@ class Edi(object):
                 sender_id,
                 "There are no songs left for which you can vote. You can still suggest new songs!"
             )
-        message = "Please vote for this song"
+        message = "What do you think of this song? {}".format(spotify.get_song_url(song_id))
         buttons = [
             {
                 "type": "postback",

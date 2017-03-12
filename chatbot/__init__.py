@@ -198,7 +198,7 @@ class Edi(object):
                    "payload": json.dumps({
                        "action": Edi.ACTION_SHOW_POLLS_LIST
                    })
-               },
+               }
 
     def introduce_bot(self, sender_id, message_text):
         # How to create a poll, list of all polls, show friends

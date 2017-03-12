@@ -408,7 +408,8 @@ class Edi(object):
         if model.select_poll(sender_id, poll_name) is None:
             send_message(sender_id,
                          "Poll successfully selected. If you send me 'show song', "
-                         "I'll offer you a random song that you stil need to vote for!",
+                         "I'll offer you a random song that you stil need to vote for! \n"
+                         "You can suggest new songs with 'suggest <query>' or by sending a Spotify URL.",
                          buttons=[
                              self.get_show_song_button()
                          ])
@@ -543,7 +544,7 @@ class Edi(object):
                             "Use 'select poll {}' to vote for songs in that poll! ".format(poll) if
                             model.get_selected_poll(participant['user_id']) != poll else
                             "Use 'show song' to get songs for which you can vote!",
-                            buttons=self.get_poll_select_buttons(sender_id, poll) + [
+                            buttons=self.get_poll_select_buttons(sender_id, poll)[:2] + [
                                 self.get_show_song_button()
                             ]
                         )

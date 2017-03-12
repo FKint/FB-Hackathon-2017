@@ -92,6 +92,7 @@ class Model:
         user_data = self.user_data.find_one({"user_id": user_id})
         if user_data is None:
             self.user_data.insert_one({
+                "user_id": user_id,
                 "name": facebook.get_user_name(user_id),
                 "selected_poll_name": None,
             })

@@ -76,3 +76,7 @@ def get_user_state(poll, user):
     if user not in user_state[poll]:
         return "voting"
     return user_state[poll][user]
+
+
+def get_song_option(user_id, poll_id):
+    return "7aIjefMJSpmNVivRcS1unF"

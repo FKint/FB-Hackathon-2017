@@ -57,8 +57,9 @@ class Edi(object):
         log("PROCESSING MESSAGE FROM {}".format(sender_id))
         log(message_text)
         action = self.get_action(message_text)
-
+        log("ACTION: {}".format(action))
         if spotify.track_name.get_track_from_message(message_text) is not None:
+            log("Recognizes spotify URL")
             self.suggest_song(sender_id, message_text)
         elif action == Edi.ACTION_INTRODUCE_BOT:
             self.introduce_bot(sender_id, message_text)

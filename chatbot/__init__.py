@@ -133,6 +133,9 @@ class Edi(object):
             self.show_poll_participants(sender_id, "show poll " + poll_id)
         elif action == Edi.ACTION_SHOW_RANKING:
             self.show_ranking(sender_id, "")
+        elif action == Edi.ACTION_INVITE_FRIEND:
+            user_id = payload["user_id"]
+            self.invite_friend(sender_id, "invite {}".format(user_id))
         else:
             send_message(sender_id, "Undefined action")
 
@@ -185,7 +188,7 @@ class Edi(object):
         send_message(sender_id, "Hello, I'm Edi. I will help you vote on playlists with your friends using our polls.")
         send_message(sender_id,
                      "Send me 'create poll roadtrip' to create a new playlist called 'roadtrip'.")
-        send_message(sender_id, "Send me 'show all polls' to see a list of all current polls."
+        send_message(sender_id, "Send me 'show all polls' to see a list of all current polls. "
                                 "Send me 'show active friends' to get a list of all your friends that use me.",
                      buttons=[{
                          "type": "postback",
@@ -199,7 +202,7 @@ class Edi(object):
                          "payload": json.dumps({
                              "action": Edi.ACTION_SHOW_ACTIVE_FRIENDS
                          })
-                     },])
+                     }, ])
 
     def show_active_friends(self, sender_id, message_text):
         # List of all Messenger contacts that can be invited
@@ -254,10 +257,25 @@ class Edi(object):
 
     def send_poll_help(self, sender_id, poll_name):
         if model.is_admin_of_poll(sender_id, poll_name):
+            log(model.get_active_friends(sender_id))
+            log(model.get_poll_participants(sender_id, poll_name))
+            friends = list(
+                set(model.get_active_friends(sender_id)) - set(model.get_poll_participants(sender_id, poll_name)))
             send_message(
                 sender_id,
                 "You can invite friends to this poll by sending me 'invite <friend_name>'. "
-                "Note that you can only invite friends which have talked to me before."
+                "Note that you can only invite friends which have talked to me before.",
+                buttons=[
+                    {
+                        "type": "postback",
+                        "title": "Invite {}".format(friend['display_name']),
+                        "payload": json.dumps({
+                            "user_id": friend['user_id'],
+                            "score": 1,
+                            "action": Edi.ACTION_INVITE_FRIEND
+                        })
+                    } for friend in friends[:5]
+                    ]
             )
         send_message(
             sender_id,

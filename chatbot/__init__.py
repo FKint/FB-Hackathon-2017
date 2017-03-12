@@ -353,9 +353,9 @@ class Edi(object):
         return [
                    {
                        "type": "postback",
-                       "title": "Show poll {}".format(x),
+                       "title": "Select poll {}".format(x),
                        "payload": json.dumps({
-                           "action": Edi.ACTION_SHOW_POLL,
+                           "action": Edi.ACTION_SELECT_POLL,
                            "poll_name": x
                        })
                    } for x in model.get_polls_for_user(user_id) if exception != x

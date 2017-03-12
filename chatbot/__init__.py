@@ -78,6 +78,8 @@ class Edi(object):
             self.show_song_option(sender_id, message_text)
         elif action == Edi.ACTION_SHOW_RANKING:
             self.show_ranking(sender_id, message_text)
+        elif action == Edi.ACTION_SHOW_POLL_PARTICIPANTS:
+            self.show_poll_participants(sender_id, message_text)
         # TODO: add other cases
 
         else:
@@ -110,6 +112,7 @@ class Edi(object):
     ACTION_CREATE_POLL = "ACTION_CREATE_POLL"
     ACTION_SHOW_POLL = "ACTION_SHOW_POLL"
     ACTION_SHOW_POLLS_LIST = "ACTION_SHOW_POLLS_LIST"
+    ACTION_SHOW_POLL_PARTICIPANTS = "SHOW_POLL_PARTICIPANTS"
     ACTION_SELECT_POLL = "ACTION_SELECT_POLL"
     ACTION_INVITE_FRIEND = "ACTION_INVITE_FRIEND"
     ACTION_SUGGEST_SONG = "ACTION_SUGGEST_SONG"
@@ -128,7 +131,8 @@ class Edi(object):
         "show song": ACTION_SHOW_SONG_OPTION,
         "invite": ACTION_INVITE_FRIEND,
         "show all polls": ACTION_SHOW_POLLS_LIST,
-        "show ranking": ACTION_SHOW_RANKING
+        "show ranking": ACTION_SHOW_RANKING,
+        "show participants": ACTION_SHOW_POLL_PARTICIPANTS
     }
 
     def get_action(self, message_text):
@@ -410,6 +414,24 @@ class Edi(object):
             buttons
         )
 
+    def show_poll_participants(self, sender_id, message_text):
+        if len(message_text.split()) != 2:
+            send_message(sender_id, "I am sorry, the option format must be 'show participants'")
+        else:
+            poll_id = model.get_selected_poll(sender_id)
+
+            message = "The participants in poll " + poll_id + " are:\n"
+
+            participants = model.get_poll_participants(sender_id, poll_id)
+            for participant in participants:
+                message  += participant["display_name"] + "\n"
+
+            send_message(sender_id, message)
+
+    def vote_song_option(self, sender_id, message_text):
+        # Apply vote
+        # Confirm vote
+        pass
 
 if __name__ == "__main__":
     e = Edi()

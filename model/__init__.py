@@ -59,3 +59,12 @@ def update_user_vote(user_id, poll_id, song_id, score):
         return None
     else:
         return "ERROR - the score is 0"
+
+def get_poll_participants(user_id, poll_id):
+    participants = [
+        {"user_id": "p1", "display_name": "Participant 1"},
+        {"user_id": "p1", "display_name": "Participant 2"},
+        {"user_id": "p1", "display_name": "Participant 3"}
+    ]
+
+    return participants

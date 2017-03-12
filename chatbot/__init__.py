@@ -4,6 +4,7 @@ import os
 import requests
 
 import model
+import spotify.track_name
 from logs import log
 
 
@@ -59,6 +60,8 @@ class Edi(object):
         action = self.get_action(message_text)
 
         print "and action = " + (action if action is not None else "")
+        if spotify.track_name.get_track_from_message(message_text) is not None:
+            self.suggest_song(sender_id, message_text)
         if action == Edi.ACTION_INTRODUCE_BOT:
             self.introduce_bot(sender_id, message_text)
         elif action == Edi.ACTION_CREATE_POLL:
@@ -77,16 +80,44 @@ class Edi(object):
             self.show_song_option(sender_id, message_text)
         elif action == Edi.ACTION_SHOW_RANKING:
             self.show_ranking(sender_id, message_text)
+        elif action == Edi.ACTION_SHOW_POLL_PARTICIPANTS:
+            self.show_poll_participants(sender_id, message_text)
+        elif action == Edi.ACTION_SUGGEST_SONG:
+            self.suggest_song(sender_id, message_text)
         # TODO: add other cases
 
         else:
             send_message(sender_id, "I don't know what you mean. Send me 'help' if you want some help.")
+
+    def handle_postback(self, sender_id, postback):
+        payload = postback["payload"]
+        payload = json.loads(payload)
+
+        poll_id = payload["poll_id"]
+        song_id = payload["song_id"]
+        score = payload["score"]
+        action = payload["action"]
+
+        if action == "voting":
+            model.set_user_state(poll_id, sender_id, "voted")
+            if score != 0 and score != 1:
+                send_message(sender_id, "I am sorry, please click a button")
+            else:
+                error = model.update_user_vote(sender_id, poll_id, song_id, score)
+
+                if error is None:
+                    send_message(sender_id, "Thanks, your vote has been recorded!")
+                else:
+                    send_message(sender_id, "I am sorry, there was an error: " + error)
+        else:
+            send_message(sender_id, "Undefined action")
 
     ACTION_INTRODUCE_BOT = "ACTION_INTRODUCE_BOT"
     ACTION_SHOW_ACTIVE_FRIENDS = "ACTION_SHOW_ACTIVE_FRIENDS"
     ACTION_CREATE_POLL = "ACTION_CREATE_POLL"
     ACTION_SHOW_POLL = "ACTION_SHOW_POLL"
     ACTION_SHOW_POLLS_LIST = "ACTION_SHOW_POLLS_LIST"
+    ACTION_SHOW_POLL_PARTICIPANTS = "SHOW_POLL_PARTICIPANTS"
     ACTION_SELECT_POLL = "ACTION_SELECT_POLL"
     ACTION_INVITE_FRIEND = "ACTION_INVITE_FRIEND"
     ACTION_SUGGEST_SONG = "ACTION_SUGGEST_SONG"
@@ -105,7 +136,8 @@ class Edi(object):
         "show song": ACTION_SHOW_SONG_OPTION,
         "invite": ACTION_INVITE_FRIEND,
         "show all polls": ACTION_SHOW_POLLS_LIST,
-        "show ranking": ACTION_SHOW_RANKING
+        "show ranking": ACTION_SHOW_RANKING,
+        "show participants": ACTION_SHOW_POLL_PARTICIPANTS
     }
 
     def get_action(self, message_text):
@@ -135,7 +167,7 @@ class Edi(object):
 
         messageContent = "The friends that can be invited are:\n"
         for friend in activeFriends:
-            messageContent += friend + "\n"
+            messageContent += friend['display_name'] + "\n"
 
         send_message(sender_id, messageContent)
 
@@ -296,7 +328,47 @@ class Edi(object):
     def suggest_song(self, sender_id, message_text):
         # Confirm that <song> has been added to <poll>
         # Show picture of the song
-        pass
+        if message_text.startswith("suggest "):
+            message_text = message_text[len("suggest: "):]
+        song_id = spotify.track_name.get_track_from_message(message_text)
+        if song_id is None:
+            send_message(
+                sender_id,
+                "I don't know that song, I haven't heard that name in Donkey's years! "
+                "Maybe try giving me its Spotify ID?"
+            )
+            return
+        poll = model.get_selected_poll(sender_id)
+        if poll is None:
+            send_message(
+                sender_id,
+                "You haven't selected a poll. Try 'show all polls' and 'select poll <poll>' to select a poll."
+            )
+            return
+        result = model.suggest_song(sender_id, poll, song_id)
+        if result is not None:
+            send_message(
+                sender_id,
+                "I'm sorry, but I can't let you suggest that song. "
+                "Either something went wrong or it is just not my style :/"
+            )
+            return
+        send_message(
+            sender_id,
+            "I suggested this song and I'll let the other participants in this poll know they can vote for it!"
+        )
+        # TODO: notify other participants
+        poll_participants = model.get_poll_participants(sender_id, poll)
+        for participant in poll_participants:
+            if model.get_user_state(poll, participant["user_id"]) is not "waiting":
+                send_message(
+                    participant['user_id'],
+                    "A new song has been added to poll {}. Switch to that poll if you want to vote for that song!"
+                        .format(poll)
+                )
+
+                model.set_user_state(poll, participant["user_id"], "waiting")
+
 
     def show_ranking(self, sender_id, message_text):
         # Show top 10 songs
@@ -329,7 +401,8 @@ class Edi(object):
                 "payload": json.dumps({
                     "song_id": "<REDACTED>",
                     "poll_id": "<REDACTED>",
-                    "score": 0
+                    "score": 0,
+                    "action": "voting"
                 })
             },
             {
@@ -338,7 +411,8 @@ class Edi(object):
                 "payload": json.dumps({
                     "song_id": "<REDACTED>",
                     "poll_id": "<REDACTED>",
-                    "score": 1
+                    "score": 1,
+                    "action": "voting"
                 })
             }
         ]
@@ -348,6 +422,20 @@ class Edi(object):
             message,
             buttons
         )
+
+    def show_poll_participants(self, sender_id, message_text):
+        if len(message_text.split()) != 2:
+            send_message(sender_id, "I am sorry, the option format must be 'show participants'")
+        else:
+            poll_id = model.get_selected_poll(sender_id)
+
+            message = "The participants in poll " + poll_id + " are:\n"
+
+            participants = model.get_poll_participants(sender_id, poll_id)
+            for participant in participants:
+                message += participant["display_name"] + "\n"
+
+            send_message(sender_id, message)
 
     def vote_song_option(self, sender_id, message_text):
         # Apply vote

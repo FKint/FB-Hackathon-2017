@@ -35,36 +35,15 @@ Import songs from Spotify
 [button for rating] Votes
 """
 
-"""
-What we will store:
-1) Friends of a person for each person on Facebook. We will map them by their
-user_id. Example:
-We will have a collection of the following for each user of FB:
-
-{
-user_id: 123,
-name: "name1",
-friend_ids: [12, 23, 44, 35, 34]
-}
-
-2) People using the application
-
-3) Collection of the polls:
-{
-poll_name: "poll1",
-admin_id: 123
-}
-
---> when creating a poll, return error if there is a poll with some given name
-
-"""
-class Poll:
+class Model:
     def __init__(self):
         """Collection of polls will look like this:
         {
         "poll_name": poll_name,
         "admin_id" admin_id,
         "participants": [user_id_1, user_id_2, user_id_3, user_id_4]
+        "songs": [{"artist": "ad", "name": "a2", "uri": "fg@sf", "score":0},
+                  {"artist": "ad2", "name": "a22", "uri": "fg@s2f", "score":0}}]
         }
 
         Collection of selected polls will look like this:
@@ -84,7 +63,16 @@ class Poll:
         "user_id": user_id,
         "friends": [1,2,4,5,34]
         }
-        maybe include there also the name?
+
+        want to choose the person by their name - so we need to assume
+        that people have different names in the set so that we can assign
+        them the ids.
+
+        Collection of names and ids will be (simplification for now):
+        {
+        "user_id": user_id,
+        "name": name
+        }
         """
         MONGODB_URI = "mongodb://heroku_f0s5338v:kurrih7o6a72idgjr2bf3c7g6d@ds129030.mlab.com:29030/heroku_f0s5338v"
         # MONGODB_URI = "mongodb://user:pass@mongoprovider.com:27409/rest"
@@ -96,6 +84,7 @@ class Poll:
         self.app_users = self.db.users
         self.app_users = []
         self.friends = self.db.friends
+        self.names = self.db.names
 
     def create_poll(self, user_id, poll_name):
         """(returns an error message or None if succeeds)"""
@@ -103,7 +92,8 @@ class Poll:
             return "Error - the poll name is already used."
         poll = {"poll_name": poll_name,
                 "admin_id": user_id,
-                "participants": set([])
+                "participants": [],
+                "songs": []
                }
         self.polls.insert_one(post)
 
@@ -156,14 +146,15 @@ class Poll:
 
         # get all the polls where the user is admin
 
-    def invite_friend(self, user_id, poll_name, friend):
+    def invite_friend(self, user_id, poll_name, friend_name):
         """returning an error message if user_id is not the admin of poll_name,
         friend is not an active user of our application our friend
         is not a FB friend of user_id
-        friend is given as an id number
+        friend is given as a name --> convert it to id
+        using database
         """
-        if self.selected_polls.find_one({"poll_name": poll_name,
-                                         "admin_id": user_id}):
+        friend = self.names.find_one({"name": friend_name})["user_id"]
+        if self.selected_polls.find_one({"poll_name": poll_name, "admin_id": user_id}):
             if friend in self.app_users:
                 if friend in self.friends.find_one({"user_id": user_id})["friends"]:
                     # update the field of participants for the poll
@@ -174,13 +165,19 @@ class Poll:
         return "Error - not admin, not user or not friend."
 
     def get_ranking(self, user_id, poll):
-    """ returning a list of dicts, each representing one song:
-    {artist: <str>, url: <str>, name: <str>} sorted by descending popularity.
-    Can return a string with the error message if the user is not a participant
-    of the poll or the poll does not exist.
-    """
-    ranking = []
-
+        """ returning a list of dicts, each representing one song:
+        {artist: <str>, uri: <str>, name: <str>} sorted by descending popularity.
+        Can return a string with the error message if the user is not a participant
+        of the poll or the poll does not exist.
+        """
+        ranking = []
+        poll = self.polls.find_one({"poll_name": poll, "admin_id": user_id})
+        if not poll:
+            return "Error - either poll or user_id does not exist."
+        songs = sorted(poll["songs"], key=lambda x: x["score"], reverse=True)
+        answ = []
+        for song in songs:
+            answ.append({"artist": song["artist"], "uri": song["uri"], "name": song["name"]})
 
     def get_active_friends(self, person_id):
         """This method returns the friends using the application
@@ -195,28 +192,43 @@ class Poll:
                 active_friends.append(friend)
         return active_friends
 
-def initialize():
-    MONGODB_URI = os.environ.get('MONGO_URL')
-    if not MONGODB_URI:
-        MONGODB_URI = "mongodb://localhost:27017/rest";
+    def suggest_song(self, user_id, poll, song_id):
+        """adds the song to poll as a suggestion from user user_id. Returns
+           None on success or a string with an
+           error message when something goes wrong.
+        """
+        try:
+            poll_songs = self.polls.find_one({"poll_name": poll})["songs"]
+            # how to add the new song to the db?
+            # need artist, name, uri, score will be 1
+            """get from Spotify the info based on song_id"""
+            artist_new = ""
+            name_new = ""
+            uri_new = ""
+            new = True
+            for song_i in range(len(poll_songs)):
+                if uri_new == poll_songs[song_i]["uri"]:
+                    poll_songs[song_i]["score"] += 1
+                    new = False
+            if new:
+                poll_songs.append({"artist": artist_new, "name": name_new, "uri": uri_new, "score": 1})
 
-    #  MONGO_URL=mongodb://user:pass@mongoprovider.com:27409/rest
+            self.polls.update_one({"poll_name": poll}, {'$set': {'songs': poll_songs}})
+        except:
+            return "Unexpected error occurred"
 
-    client = MongoClient(MONGODB_URI) # this should direct to Heroku
-    db = client['songs-database'] # the database with that name should be created in Heroku
-    # or use db = client.get_default_database()
-    # collection = db['songs-collection']
-
-    # if we get a new vote from some user
-    # it should be in json format
-
-    post = {song: "abc1",
-            user: "user1",
-            vote: 1,
-            last_session: datetime.datetime.now()}
-
-    posts = db.posts
-
-    posts.insert_one(post)
-
-# posts.find_one() # for finding a post
+    def get_poll_participants(self, user_id, poll):
+        """returns a list of
+           {user_id: <string>, display_name: <string>} values
+            (similar to get_active_friends) representing all users participating
+             in the poll
+           (only returned when user_id is a member of that poll as well). Returns
+           the list upon success or <string> when an error occurred.
+        """
+        participants = self.polls.find_one({"poll_name": poll})["participants"]
+        if user_id in participants:
+            people_list = []
+            for e in  participants:
+                people_list.append({"user_id": e, "display_name": self.names.find_one({"user_id": e})["name"]})
+            return people_list
+        return "Error - poll does not exist or the user is not a member of poll."

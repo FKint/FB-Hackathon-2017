@@ -1,4 +1,5 @@
 import os
+import random
 
 from pymongo import MongoClient
 
@@ -305,10 +306,14 @@ class Model:
         poll = self.polls.find_one({"poll_name": poll_id})
         log("Songs for poll {}".format(poll_id))
         log(poll["songs"])
+        good_song_ids = []
         for song in poll["songs"]:
             if user_id not in song['votes'] and song['suggested_by'] != user_id:
-                return song["song_id"]
-        return None
+                good_song_ids.append(song["song_id"])
+        if len(good_song_ids) == 0:
+            return None
+        ind = random.randrange(0, len(good_song_ids))
+        return good_song_ids[ind]
 
     def update_user_vote(self, user_id, poll_id, song_id, score):
         """sets the vote for user_id in poll_id for song_id to score

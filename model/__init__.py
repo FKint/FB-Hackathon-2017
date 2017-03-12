@@ -73,4 +73,6 @@ def set_user_state(poll, user, state):
 def get_user_state(poll, user):
     if poll not in user_state:
         return "voting"
+    if user not in user_state[poll]:
+        return "voting"
     return user_state[poll][user]

@@ -99,6 +99,7 @@ class Edi(object):
         action = payload["action"]
 
         if action == "voting":
+            model.set_user_state(poll_id, sender_id, "voted")
             if score != 0 and score != 1:
                 send_message(sender_id, "I am sorry, please click a button")
             else:
@@ -359,11 +360,15 @@ class Edi(object):
         # TODO: notify other participants
         poll_participants = model.get_poll_participants(sender_id, poll)
         for participant in poll_participants:
-            send_message(
-                participant['user_id'],
-                "A new song has been added to poll {}. Switch to that poll if you want to vote for that song!"
-                    .format(poll)
-            )
+            if model.get_user_state(poll, participant["user_id"]) is not "waiting":
+                send_message(
+                    participant['user_id'],
+                    "A new song has been added to poll {}. Switch to that poll if you want to vote for that song!"
+                        .format(poll)
+                )
+
+                model.set_user_state(poll, participant["user_id"], "waiting")
+
 
     def show_ranking(self, sender_id, message_text):
         # Show top 10 songs

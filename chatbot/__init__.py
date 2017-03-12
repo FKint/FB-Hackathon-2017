@@ -58,7 +58,7 @@ class Edi(object):
         send_message(
             sender_id,
             "You haven't selected a poll. Try 'show all polls' and 'select poll <poll>' to select a poll.",
-            buttons=[self.get_polls_list_button(sender_id)] + self.get_poll_select_buttons(sender_id)
+            buttons=[self.get_polls_list_button(sender_id)] + list(self.get_poll_select_buttons(sender_id))
         )
 
     def handle_message(self, sender_id, message_text):
@@ -365,16 +365,14 @@ class Edi(object):
         )
 
     def get_poll_select_buttons(self, user_id, exception=None):
-        return [
-                   {
-                       "type": "postback",
-                       "title": "Select poll {}".format(x),
-                       "payload": json.dumps({
-                           "action": Edi.ACTION_SELECT_POLL,
-                           "poll_name": x
-                       })
-                   } for x in model.get_polls_for_user(user_id) if exception != x
-                   ][:3]
+        return [{
+                    "type": "postback",
+                    "title": "Select poll {}".format(x),
+                    "payload": json.dumps({
+                        "action": Edi.ACTION_SELECT_POLL,
+                        "poll_name": x
+                    })
+                } for x in model.get_polls_for_user(user_id) if exception != x][:3]
 
     def show_polls_list(self, sender_id, message_text):
         polls = model.get_polls_for_user(sender_id)

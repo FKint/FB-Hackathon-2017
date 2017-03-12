@@ -205,6 +205,7 @@ class Model:
         answ = []
         for song in songs:
             answ.append({"artist": song["artist"], "uri": song["uri"], "name": song["name"]})
+        return answ
 
     def get_active_friends(self, person_id):
         """This method returns the friends using the application

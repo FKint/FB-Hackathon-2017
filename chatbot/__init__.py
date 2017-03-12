@@ -448,8 +448,10 @@ class Edi(object):
         index = 0
         for song in ranking:
             index += 1
-            send_message(sender_id, "Nb. {}: {} ({}) with {} votes".format(index, song['artist'] + " - " + song['title'],
-                                                             song['uri'], song['score']))
+            send_message(sender_id,
+                         "Nb. {}: {} ({}) with {} votes".format(index, song['artist'] + " - " + song['title'],
+                                                                spotify.track_name.id_to_url(song['song_id']),
+                                                                song['score']))
 
     def show_song_option(self, sender_id, message_text, confirmed=False):
         # Retrieve random song that user needs to vote for

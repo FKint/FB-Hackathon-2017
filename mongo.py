@@ -197,7 +197,7 @@ class Model:
         of the poll or the poll does not exist.
         """
         ranking = []
-        poll = self.polls.find_one({"poll_name": poll, "admin_id": user_id})
+        poll = self.polls.find_one({"poll_name": poll})
         if not poll:
             return "Error - either poll or user_id does not exist."
         # scores will be just the sums of values given by the users as scores

@@ -12,12 +12,9 @@ def log(message):  # simple wrapper for logging to stdout on heroku
 class PlaylistHandler:
     '''
     Create a playlist and add tracks to it
-    ph=PlaylistHandler()
-    track_url = ["0xBsZrUrsZcCCrpxryZDHc"]
-    ph.add_to_playlist(track_url)
     '''
 
-    def __init__(self, username="com.ramona@yahoo.com"):
+    def __init__(self, username="floris.kint@gmail.com"):
         scope = 'playlist-modify-public'
         token = util.prompt_for_user_token(username, scope)
         self.sp = spotipy.Spotify(auth=token)
@@ -35,3 +32,8 @@ class PlaylistHandler:
         if self.playlist_id:
             self.sp.user_playlist_add_tracks(self.user_id, self.playlist_id, track_ids)
             log("added song to playlist")
+
+if __name__ == "__main__":
+    ph = PlaylistHandler()
+    track_url = ["0xBsZrUrsZcCCrpxryZDHc"]
+    ph.add_to_playlist(track_url)

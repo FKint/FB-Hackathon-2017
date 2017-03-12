@@ -54,6 +54,12 @@ class Edi(object):
     def __init__(self):
         pass
 
+    def write_no_poll_selected(self, sender_id):
+        send_message(
+            sender_id,
+            "You haven't selected a poll. Try 'show all polls' and 'select poll <poll>' to select a poll."
+        )
+
     def handle_message(self, sender_id, message_text):
         log("PROCESSING MESSAGE FROM {}".format(sender_id))
         log(message_text)
@@ -212,7 +218,10 @@ class Edi(object):
             return
         send_message(
             sender_id,
-            "I selected poll {} for you.".format(poll_name)
+            "I selected poll {} for you. {}".format(
+                poll_name,
+                "You're the ADMIN!" if model.is_admin_of_poll(sender_id, poll_name) else ""
+            )
         )
         self.send_poll_help(sender_id, poll_name)
 
@@ -277,7 +286,8 @@ class Edi(object):
             )
         send_message(
             sender_id,
-            "You can select another poll by sending me 'select poll <poll>', where <poll> is the name of the poll."
+            "You can select another poll by sending me 'select poll <poll>', where <poll> is the name of the poll.\n"
+            "If you send me 'create poll <poll>', I'll make you admin of one!"
         )
 
     def select_poll(self, sender_id, message_text):
@@ -301,10 +311,7 @@ class Edi(object):
         # Confirm that <friend> has been added to <poll>
         active_poll = model.get_selected_poll(sender_id)
         if active_poll is None:
-            send_message(
-                sender_id,
-                "You haven't selected a poll. Try 'show all polls' and 'select poll <poll>' to select a poll."
-            )
+            self.write_no_poll_selected(sender_id)
             return
         parts = message_text.split()
         if len(parts) < 2:
@@ -337,28 +344,16 @@ class Edi(object):
         # Confirm that <song> has been added to <poll>
         # Show picture of the song
         if message_text.startswith("suggest "):
-            message_text = message_text[len("suggest: "):]
+            message_text = message_text[len("suggest "):]
 
         poll = model.get_selected_poll(sender_id)
         if poll is None:
-            send_message(
-                sender_id,
-                "You haven't selected a poll. Try 'show all polls' and 'select poll <poll>' to select a poll."
-            )
+            self.write_no_poll_selected(sender_id)
             return
         # TODO: also check other forms of queries
         song_id = spotify.track_name.check_track_with_url(message_text)
         if song_id is None:
             # Try to find it based on keywords
-
-            """
-            if "-" not in message_text:
-                send_message(
-                    sender_id,
-                    "Please follow the format <artist> - <song name> (include a '-' between the artist and the song name)"
-                )
-                return
-            """
             song_id = spotify.track_name.check_track_with_keywords(message_text)
             if song_id is None:
                 send_message(
@@ -369,8 +364,20 @@ class Edi(object):
                 return
             if not confirmed:
                 artist, title, uri = spotify.track_name.get_metadata(song_id)
+                log(title)
+                log(artist)
                 message = "Is {} by {} the suggestion you want to make?".format(title, artist)
                 buttons = [
+                    {
+                        "type": "postback",
+                        "title": "Yes",
+                        "payload": json.dumps({
+                            "song_id": song_id,
+                            "poll_id": poll,
+                            "score": 1,
+                            "action": "confirming"
+                        })
+                    },
                     {
                         "type": "postback",
                         "title": "No",
@@ -381,16 +388,6 @@ class Edi(object):
                             "action": "confirming"
                         })
                     },
-                    {
-                        "type": "postback",
-                        "title": "Yes",
-                        "payload": json.dumps({
-                            "song_id": song_id,
-                            "poll_id": poll,
-                            "score": 1,
-                            "action": "confirming"
-                        })
-                    }
                 ]
 
                 send_message(
@@ -444,10 +441,7 @@ class Edi(object):
         # Later: paginator: next 10
         active_poll = model.get_selected_poll(sender_id)
         if active_poll is None:
-            send_message(
-                sender_id,
-                "You haven't selected a poll. Try 'show all polls' and 'select poll <poll>' to select a poll."
-            )
+            self.write_no_poll_selected(sender_id)
             return
         ranking = model.get_ranking(sender_id, active_poll)
         send_message(sender_id, "The current favourite songs are: ")
@@ -463,10 +457,7 @@ class Edi(object):
         # No song available: suggest a song
         poll_id = model.get_selected_poll(sender_id)
         if poll_id is None:
-            send_message(
-                sender_id,
-                "You haven't selected a poll. Try 'show all polls' and 'select poll <poll>' to select a poll."
-            )
+            self.write_no_poll_selected(sender_id)
             return
         song_id = model.get_song_option(sender_id, poll_id)
         if song_id is None:
@@ -475,94 +466,13 @@ class Edi(object):
                 "I'm sorry, but I don't have any songs that you can vote on. Feel free to suggest some though!"
             )
             return
-        """song_id = spotify.track_name.check_track_with_url(message_text)
-
-        if song_id is None:
-            song_id = spotify.track_name.check_track_with_keywords(message_text)
-
-        if song_id is None:
-            message = "I am sorry, I cannot find anything. Try another song."
-            send_message(sender_id, message)
-            return
-            
-        if not confirmed:
-
-            message = "Is this the suggestion you want to make?"
-            buttons = [
-                {
-                    "type": "postback",
-                    "title": "No",
-                    "payload": json.dumps({
-                        "song_id": song_id,
-                        "poll_id": poll_id,
-                        "score": 0,
-                        "action": "confirming"
-                    })
-                },
-                {
-                    "type": "postback",
-                    "title": "Yes",
-                    "payload": json.dumps({
-                        "song_id": song_id,
-                        "poll_id": poll_id,
-                        "score": 1,
-                        "action": "confirming"
-                    })
-                }
-            ]
-
-            send_message(
-                sender_id,
-                message,
-                buttons
-            )
-        else:
-            song_id = spotify.track_name.check_track_with_keywords(message_text)
-
-            message = "What do you think of this song? {}".format(spotify.track_name.id_to_url(song_id))
-
-            buttons = [
-                {
-                    "type": "postback",
-                    "title": "Dislike",
-                    "payload": json.dumps({
-                        "song_id": song_id,
-                        "poll_id": poll_id,
-                        "score": 0,
-                        "action": "voting"
-                    })
-                },
-                {
-                    "type": "postback",
-                    "title": "Like",
-                    "payload": json.dumps({
-                        "song_id": song_id,
-                        "poll_id": poll_id,
-                        "score": 1,
-                        "action": "voting"
-                    })
-                }
-            ]
-            send_message(
-                sender_id,
-                message,
-                buttons
-            )
-"""
         artist, title, uri = spotify.track_name.get_metadata(song_id)
-        # TODO: Try to add a nice preview
-        message = "What do you think of {} by {}? {}".format(title, artist, spotify.track_name.id_to_url(song_id))
+        url = spotify.track_name.id_to_url(song_id)
+
+        message = "What do you think of {} by {}? {}. Find it here {}.".format(title, artist,
+                                                                               spotify.track_name.id_to_url(song_id),
+                                                                               url)
         buttons = [
-            {
-                "type": "postback",
-                "title": "Dislike",
-                "payload": json.dumps({
-                    "song_id": song_id,
-                    "poll_id": poll_id,
-                    "score": 0,
-                    "action": "voting"
-                })
-            },
             {
                 "type": "postback",
                 "title": "Like",
@@ -572,7 +482,16 @@ class Edi(object):
                     "score": 1,
                     "action": "voting"
                 })
-            }
+            }, {
+                "type": "postback",
+                "title": "Dislike",
+                "payload": json.dumps({
+                    "song_id": song_id,
+                    "poll_id": poll_id,
+                    "score": 0,
+                    "action": "voting"
+                })
+            },
         ]
 
         send_message(
@@ -601,12 +520,11 @@ class Edi(object):
                              "An error happened, sorry: {}".format(participants))
 
     def export_list(self, sender_id, message_text):
+        send_message(sender_id, "Unfortunately this functionality is not ready yet!")
+        return
         poll = model.get_selected_poll(sender_id)
         if poll is None:
-            send_message(
-                sender_id,
-                "You haven't selected a poll. Try 'show all polls' and 'select poll <poll>' to select a poll."
-            )
+            self.write_no_poll_selected(sender_id)
             return
         ranking = model.get_ranking(sender_id, poll)
         handler = spotify.user_playlist.PlaylistHandler()

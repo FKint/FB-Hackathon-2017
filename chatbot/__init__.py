@@ -214,7 +214,7 @@ class Edi(object):
                                   "payload": json.dumps({
                                       "action": Edi.ACTION_SHOW_ACTIVE_FRIENDS
                                   })
-                              }, ])
+                              }])
 
     def show_active_friends(self, sender_id, message_text):
         # List of all Messenger contacts that can be invited

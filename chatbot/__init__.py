@@ -362,6 +362,7 @@ class Edi(object):
             send_message(
                 participant['user_id'],
                 "A new song has been added to poll {}. Switch to that poll if you want to vote for that song!"
+                    .format(poll)
             )
 
     def show_ranking(self, sender_id, message_text):

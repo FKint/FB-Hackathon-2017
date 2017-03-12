@@ -34,12 +34,16 @@ def search_for_name_and_artist(w1,w2):
     return None
 
 def check_track_with_keywords(message):               
-    # look for track with artist name or song name
+    """ look for track with artist name or song name
+    Returns url
+    """
 
-    ww=message.split('-')
-    w1=ww[0].strip()
-    w2=ww[1].strip()
-    x=search_for_name_and_artist(w1,w2)
+    ww = message.split('-')
+    w1 = ww[0].strip()
+    w2 = ""
+    if len(ww) >1:
+        w2 = ww[1].strip()
+    x = search_for_name_and_artist(w1,w2)
     if x:
         return x
 
@@ -61,5 +65,5 @@ def get_metadata(id):
     return (artist,name,uri)
 
 #get_track_from_message("https://open.spotify.com/track/3ZFTkvIE7kyPt6Nu3PEa7V")
-#print check_track_with_keywords("Hips don't lie- Shakira")
+#print check_track_with_keywords("Frank Sinatra ")
 #print get_metadata("3ZFTkvIE7kyPt6Nu3PEa7V")

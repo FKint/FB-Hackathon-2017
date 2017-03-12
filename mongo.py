@@ -4,6 +4,7 @@ from pymongo import MongoClient
 
 import facebook
 import spotify.track_name
+from logs import log
 
 # use the below in Heroku with relevant user, pass and mongoprovider
 # heroku create
@@ -47,7 +48,8 @@ class Model:
         "admin_id" admin_id,
         "participants": [user_id_1, user_id_2, user_id_3, user_id_4]
         "songs": [{"artist": "ad", "name": "a2", "uri": "fg@sf", "score":0},
-                  {"artist": "ad2", "name": "a22", "uri": "fg@s2f", "score":0}}]
+                  {"artist": "ad2", "name": "a22", "uri": "fg@s2f", "score":0}}],
+        "participant_states": {"user12": "waiting", "user324": "waiting"}
         }
 
         Collection of selected polls will look like this:
@@ -104,7 +106,8 @@ class Model:
         poll = {"poll_name": poll_name,
                 "admin_id": user_id,
                 "participants": [user_id],
-                "songs": []
+                "songs": [],
+                "participant_states": {}
                 }
         self.polls.insert_one(poll)
 
@@ -162,6 +165,7 @@ class Model:
         friend is given as a name --> convert it to id
         using database
         """
+        log("Trying to invite friend: {}".format(friend_name))
         poll = self.polls.find_one({"poll_name": poll_name, "admin_id": user_id})
         if poll is None:
             return "Error - Poll does not exist or is not owned by user."
@@ -170,12 +174,14 @@ class Model:
             return "Error - No user record found"
         user_friends = facebook.get_user_friends(user_id)
         official_friend_name = None
-        for f in user_friends:
-            if friend_name in f:
-                official_friend_name = friend_name
+        for friend_id in user_friends:
+            actual_friend_name = facebook.get_user_name(friend_id)
+            if friend_name in actual_friend_name:
+                official_friend_name = actual_friend_name
         if official_friend_name is None:
             return "Error - No valid friend found"
-        friend = self.user_data.find_one({"display_name": friend_name})
+        log("Found friend with name {}".format(official_friend_name))
+        friend = self.user_data.find_one({"name": official_friend_name})
         if friend is None:
             return "Friend is not using the bot!"
 
@@ -183,8 +189,8 @@ class Model:
         self.polls.update_one({
             "poll_name": poll_name
         }, {
-            "participants": {
-                "$addToSet": friend['user_id']
+            "$addToSet": {
+                "participants": friend['user_id']
             }
         })
         return None
@@ -261,3 +267,27 @@ class Model:
                 people_list.append({"user_id": e, "display_name": self.user_data.find_one({"user_id": e})["name"]})
             return people_list
         return "Error - user is not a member of poll."
+
+    def set_user_state(self, poll_id, user_id, state):
+        """updates the state of the user with user_id
+        within the poll with poll_id to state
+        """
+        poll_participant_states = self.polls.find_one({"poll_name": poll_id})["participant_states"]
+        poll_participant_states[user_id] = state
+        self.polls.update({
+            "poll_name": poll_id
+        }, {
+            "$set": {
+                "participant_states": poll_participant_states
+            }
+        })
+
+
+    def get_user_state(self, poll_id, user_id):
+        """returns the state of the user with user_id
+        within the poll with poll_id
+        """
+        try:
+            return self.polls.find_one({"poll_name": poll_id})["participant_states"][user_id]
+        except:
+            return "Error - either poll_id or user_id is wrong"

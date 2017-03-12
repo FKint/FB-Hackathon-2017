@@ -32,7 +32,7 @@ def send_message(recipient_id, message_text, buttons=None):
                 "type": "template",
                 "payload": {
                     "template_type": "button",
-                    "text": "Click me",
+                    "text": message_text,
                     "buttons": buttons,
                 }
             }
@@ -225,7 +225,7 @@ class Edi(object):
         )
         send_message(
             sender_id,
-            "You can ask me to send a song that you can vote for by sending 'show option'."
+            "You can ask me to send a song that you can vote for by sending 'show song'."
         )
         send_message(
             sender_id,
@@ -313,6 +313,7 @@ class Edi(object):
             return
         error = model.invite_friend(sender_id, active_poll, friend)
         if error is not None:
+            log(error)
             send_message(
                 sender_id,
                 "I couldn't add your friend, please check it's not an imaginary friend of yours ;)"
@@ -358,15 +359,22 @@ class Edi(object):
         )
         # TODO: notify other participants
         poll_participants = model.get_poll_participants(sender_id, poll)
-        for participant in poll_participants:
-            if model.get_user_state(poll, participant["user_id"]) is not "waiting":
-                send_message(
-                    participant['user_id'],
-                    "A new song has been added to poll {}. Switch to that poll if you want to vote for that song!"
-                        .format(poll)
-                )
+        if isinstance(poll_participants, list):
+            for participant in poll_participants:
+                if model.get_user_state(poll, participant["user_id"]) is not "waiting":
+                    send_message(
+                        participant['user_id'],
+                        "A new song has been added to poll {}. Switch to that poll if you want to vote for that song!"
+                            .format(poll)
+                    )
 
-                model.set_user_state(poll, participant["user_id"], "waiting")
+                    model.set_user_state(poll, participant["user_id"], "waiting")
+        else:
+            log(poll_participants)
+            send_message(
+                sender_id,
+                "An error happened, sorry :/"
+            )
 
     def show_ranking(self, sender_id, message_text):
         # Show top 10 songs
@@ -389,16 +397,28 @@ class Edi(object):
     def show_song_option(self, sender_id, message_text):
         # Retrieve random song that user needs to vote for
         # Present with 0, 1 or cancel button.
-        # No song available: suggest a song?
-
-        message = "Please vote for this song"
+        # No song available: suggest a song
+        poll_id = model.get_selected_poll(sender_id)
+        if poll_id is None:
+            send_message(
+                sender_id,
+                "You haven't selected a poll. Try 'show all polls' and 'select poll <poll>' to select a poll."
+            )
+            return
+        song_id = model.get_song_option(sender_id, poll_id)
+        if song_id is None:
+            send_message(
+                sender_id,
+                "There are no songs left for which you can vote. You can still suggest new songs!"
+            )
+        message = "What do you think of this song? {}".format(spotify.get_song_url(song_id))
         buttons = [
             {
                 "type": "postback",
                 "title": "Dislike",
                 "payload": json.dumps({
-                    "song_id": "<REDACTED>",
-                    "poll_id": "<REDACTED>",
+                    "song_id": song_id,
+                    "poll_id": poll_id,
                     "score": 0,
                     "action": "voting"
                 })
@@ -407,8 +427,8 @@ class Edi(object):
                 "type": "postback",
                 "title": "Like",
                 "payload": json.dumps({
-                    "song_id": "<REDACTED>",
-                    "poll_id": "<REDACTED>",
+                    "song_id": song_id,
+                    "poll_id": poll_id,
                     "score": 1,
                     "action": "voting"
                 })
@@ -430,10 +450,15 @@ class Edi(object):
             message = "The participants in poll " + (poll_id if poll_id is not None else "NONE") + " are:\n"
 
             participants = model.get_poll_participants(sender_id, poll_id)
-            for participant in participants:
-                message += participant["display_name"] + "\n"
+            if isinstance(participants, list):
+                for participant in participants:
+                    message += participant["display_name"] + "\n"
 
-            send_message(sender_id, message)
+                send_message(sender_id, message)
+            else:
+                log(participants)
+                send_message(sender_id,
+                             "An error happened, sorry: {}".format(participants))
 
     def vote_song_option(self, sender_id, message_text):
         # Apply vote

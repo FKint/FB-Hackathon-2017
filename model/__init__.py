@@ -59,14 +59,24 @@ def get_poll_participants(user_id, poll_id):
 def suggest_song(user_id, poll, song_id):
     return None
 
+
 user_state = dict()
+
 
 def set_user_state(poll, user, state):
     if poll not in user_state:
         user_state[poll] = dict()
-        
+
     user_state[poll][user] = state
-   
+
+
 def get_user_state(poll, user):
+    if poll not in user_state:
+        return "voting"
+    if user not in user_state[poll]:
+        return "voting"
     return user_state[poll][user]
 
+
+def get_song_option(user_id, poll_id):
+    return "7aIjefMJSpmNVivRcS1unF"

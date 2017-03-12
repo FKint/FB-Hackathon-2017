@@ -2,6 +2,7 @@ import os
 from pymongo import MongoClient
 import facebook
 import spotify.track_name
+from logs import log
 
 """
 [new user] Introduce to users
@@ -157,6 +158,7 @@ class Model:
         friend is given as a name --> convert it to id
         using database
         """
+        log("Trying to invite friend: {}".format(friend_name))
         poll = self.polls.find_one({"poll_name": poll_name, "admin_id": user_id})
         if poll is None:
             return "Error - Poll does not exist or is not owned by user."
@@ -165,12 +167,14 @@ class Model:
             return "Error - No user record found"
         user_friends = facebook.get_user_friends(user_id)
         official_friend_name = None
-        for f in user_friends:
-            if friend_name in f:
-                official_friend_name = friend_name
+        for friend_id in user_friends:
+            actual_friend_name = facebook.get_user_name(friend_id)
+            if friend_name in actual_friend_name:
+                official_friend_name = actual_friend_name
         if official_friend_name is None:
             return "Error - No valid friend found"
-        friend = self.user_data.find_one({"display_name": friend_name})
+        log("Found friend with name {}".format(official_friend_name))
+        friend = self.user_data.find_one({"name": official_friend_name})
         if friend is None:
             return "Friend is not using the bot!"
 
@@ -178,8 +182,8 @@ class Model:
         self.polls.update_one({
             "poll_name": poll_name
         }, {
-            "participants": {
-                "$addToSet": friend['user_id']
+            "$addToSet": {
+                "participants": friend['user_id']
             }
         })
         return None

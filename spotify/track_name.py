@@ -21,15 +21,17 @@ def search_for_name_and_artist(w1,w2):
     sp = spotipy.Spotify()
     results = sp.search(q='artist:' + w1, type='artist')
     items = results['artists']['items']
+    ptential=None
     for artist in items:
         if artist["name"] == w1:
             tracks = sp.artist_top_tracks(artist["uri"])
-            for track in tracks['tracks']:
+            for track in tracks['tracks'][:20]:
                 a=re.sub("\W+", "", w2).lower()
-                b=re.sub("\W+", "", track['name']).lower()
+                b=re.sub("\W+", "", track['name']).lower()          
+                potential=track['external_urls']['spotify']
                 if a in b or b in a:
-                    return track['external_urls']['spotify']
-    return None
+                    return potential
+    return potential
 
 def check_track_with_keywords(message):               
     """ look for track with artist name or song name
@@ -43,11 +45,9 @@ def check_track_with_keywords(message):
 
     w1 = ww[0].strip()
     w2 = ww[1].strip()
-    print w1
-    print w2
+
     x = search_for_name_and_artist(w1,w2)
-    if x:
-        
+    if x:   
         return x
 
     #do the same thing for artist and name in opposite order
@@ -68,5 +68,5 @@ def get_metadata(id):
     return (artist,name,uri)
 
 #print check_track_with_url("https://open.spotify.com/track/3ZFTkvIE7kyPt6Nu3PEa7V")
-#print check_track_with_keywords("Frank Sinatra - Young at Heart ")
+#print check_track_with_keywords("Frank Sinatra - Fly me to the moon ")
 #print get_metadata("3ZFTkvIE7kyPt6Nu3PEa7V")

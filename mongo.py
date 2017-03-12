@@ -187,8 +187,8 @@ class Model:
         self.polls.update_one({
             "poll_name": poll_name
         }, {
-            "participants": {
-                "$addToSet": friend['user_id']
+            "$addToSet": {
+                "participants": friend['user_id']
             }
         })
         return None

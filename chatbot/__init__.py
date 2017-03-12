@@ -561,12 +561,12 @@ class Edi(object):
                             ]
                         )
                         model.set_user_state(poll, participant["user_id"], "waiting")
-            else:
-                log(poll_participants)
-                send_message(
-                    sender_id,
-                    "An error happened, sorry :/"
-                )
+        else:
+            log(poll_participants)
+            send_message(
+                sender_id,
+                "An error happened, sorry :/"
+            )
 
     def show_ranking(self, sender_id, message_text):
         # Show top 10 songs

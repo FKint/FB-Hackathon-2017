@@ -424,8 +424,10 @@ class Edi(object):
                 if model.get_user_state(poll, participant["user_id"]) is not "waiting":
                     send_message(
                         participant['user_id'],
-                        "A new song has been added to poll {}. Switch to that poll if you want to vote for that song!"
-                            .format(poll)
+                        "A new song has been added to poll {}. {}"
+                            .format(poll,
+                                    "Switch to that poll if you want to vote for that song!" if model.get_selected_poll(
+                                        participant['user_id']) != poll else "")
                     )
 
                     model.set_user_state(poll, participant["user_id"], "waiting")

@@ -197,15 +197,25 @@ class Model:
            None on success or a string with an
            error message when something goes wrong.
         """
-        {
-        "poll_name": poll_name,
-        "admin_id" admin_id,
-        "participants": [user_id_1, user_id_2, user_id_3, user_id_4]
-        "songs": [{"artist": "ad", "name": "a2", "uri": "fg@sf", "score":0},
-                  {"artist": "ad2", "name": "a22", "uri": "fg@s2f", "score":0}}]
-        }
-        poll = self.polls.find_one({"poll_name": poll, "admin_id": user_id})
-        return None
+        try:
+            poll_songs = self.polls.find_one({"poll_name": poll})["songs"]
+            # how to add the new song to the db?
+            # need artist, name, uri, score will be 1
+            """get from Spotify the info based on song_id"""
+            artist_new = ""
+            name_new = ""
+            uri_new = ""
+            new = True
+            for song_i in range(len(poll_songs)):
+                if uri_new == poll_songs[song_i]["uri"]:
+                    poll_songs[song_i]["score"] += 1
+                    new = False
+            if new:
+                poll_songs.append({"artist": artist_new, "name": name_new, "uri": uri_new, "score": 1})
+
+            self.polls.update_one({"poll_name": poll}, {'$set': {'songs': poll_songs}})
+        except:
+            return "Unexpected error occurred"
 
     def get_poll_participants(self, user_id, poll):
         """returns a list of

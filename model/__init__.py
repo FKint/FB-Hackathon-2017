@@ -4,7 +4,11 @@
 
 # Dummy methods - to be deleted
 def get_active_friends(user_id):
-    friends = ["Friend 1", "Friend 2", "Friend 3"]
+    friends = [
+        {"user_id": "f1", "display_name": "Friend 1"},
+        {"user_id": "f2", "display_name": "Friend 2"},
+        {"user_id": "f3", "display_name": "Friend 3"},
+    ]
 
     return friends
 
@@ -48,3 +52,24 @@ def get_ranking(user_id, poll_name):
         {"name": "Roxanne", "artist": "The Police", "uri": "spotify:track:2NMgVh5qaPprKTEzFe3501"},
         {"name": "Like a stone", "artist": "Audioslave", "uri": "spotify:track:3YuaBvuZqcwN3CEAyyoaei"},
     ]
+
+
+def update_user_vote(user_id, poll_id, song_id, score):
+    if score == 1:
+        return None
+    else:
+        return "ERROR - the score is 0"
+
+
+def get_poll_participants(user_id, poll_id):
+    participants = [
+        {"user_id": "1363580823709423", "display_name": "Participant 1"},
+        {"user_id": "1363580823709423", "display_name": "Participant 2"},
+        {"user_id": "1363580823709423", "display_name": "Participant 3"}
+    ]
+
+    return participants
+
+
+def suggest_song(user_id, poll, song_id):
+    return None

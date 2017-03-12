@@ -4,6 +4,7 @@ import os
 import requests
 
 import model
+import spotify.track_name
 from logs import log
 
 
@@ -157,7 +158,7 @@ class Edi(object):
 
         messageContent = "The friends that can be invited are:\n"
         for friend in activeFriends:
-            messageContent += friend + "\n"
+            messageContent += friend['display_name'] + "\n"
 
         send_message(sender_id, messageContent)
 
@@ -318,7 +319,43 @@ class Edi(object):
     def suggest_song(self, sender_id, message_text):
         # Confirm that <song> has been added to <poll>
         # Show picture of the song
-        pass
+        if message_text.startswith("suggest "):
+            message_text = message_text[len("suggest: "):]
+        song_id = spotify.track_name.get_track_from_message(message_text)
+        if song_id is None:
+            send_message(
+                sender_id,
+                "I don't know that song, I haven't heard that name in Donkey's years! "
+                "Maybe try giving me its Spotify ID?"
+            )
+            return
+        poll = model.get_selected_poll(sender_id)
+        if poll is None:
+            send_message(
+                sender_id,
+                "You haven't selected a poll. Try 'show all polls' and 'select poll <poll>' to select a poll."
+            )
+            return
+        result = model.suggest_song(sender_id, poll, song_id)
+        if result is not None:
+            send_message(
+                sender_id,
+                "I'm sorry, but I can't let you suggest that song. "
+                "Either something went wrong or it is just not my style :/"
+            )
+            return
+        send_message(
+            sender_id,
+            "I suggested this song and I'll let the other participants in this poll know they can vote for it!"
+        )
+        # TODO: notify other participants
+        poll_participants = model.get_poll_participants(sender_id, poll)
+        for participant in poll_participants:
+            send_message(
+                participant['user_id'],
+                "A new song has been added to poll {}. Switch to that poll if you want to vote for that song!"
+            )
+
 
     def show_ranking(self, sender_id, message_text):
         # Show top 10 songs
@@ -372,11 +409,6 @@ class Edi(object):
             message,
             buttons
         )
-
-    def vote_song_option(self, sender_id, message_text):
-        # Apply vote
-        # Confirm vote
-        pass
 
 
 if __name__ == "__main__":

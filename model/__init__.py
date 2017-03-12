@@ -4,7 +4,11 @@
 
 # Dummy methods - to be deleted
 def get_active_friends(user_id):
-    friends = ["Friend 1", "Friend 2", "Friend 3"]
+    friends = [
+        {"user_id": "f1", "display_name": "Friend 1"},
+        {"user_id": "f2", "display_name": "Friend 2"},
+        {"user_id": "f3", "display_name": "Friend 3"},
+    ]
 
     return friends
 
@@ -55,4 +59,3 @@ def update_user_vote(user_id, poll_id, song_id, score):
         return None
     else:
         return "ERROR - the score is 0"
-        

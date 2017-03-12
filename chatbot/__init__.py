@@ -60,7 +60,7 @@ class Edi(object):
 
         if spotify.track_name.get_track_from_message(message_text) is not None:
             self.suggest_song(sender_id, message_text)
-        if action == Edi.ACTION_INTRODUCE_BOT:
+        elif action == Edi.ACTION_INTRODUCE_BOT:
             self.introduce_bot(sender_id, message_text)
         elif action == Edi.ACTION_CREATE_POLL:
             self.create_poll(sender_id, message_text)

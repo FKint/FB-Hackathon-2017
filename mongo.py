@@ -145,13 +145,13 @@ class Model:
             return sel_pol_doc["selected_poll_name"]
         return None
 
-    def get_polls_for_user(self, sender_id):
+    def get_polls_for_user(self, user_id):
         """returning a list of strings (the poll names where this user is
          active in, both as admin and as participant)
         """
         poll_names = set([])
         for poll in self.polls.find():
-            if sender_id in poll["participants"]:
+            if user_id in poll["participants"]:
                 poll_names.add(poll["poll_name"])
         return list(poll_names)
 

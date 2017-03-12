@@ -34,6 +34,6 @@ class PlaylistHandler:
             log("added song to playlist")
 
 
-ph = PlaylistHandler()
-track_url = ["0xBsZrUrsZcCCrpxryZDHc"]
-ph.add_to_playlist(track_url)
+#ph = PlaylistHandler()
+#track_url = ["0xBsZrUrsZcCCrpxryZDHc"]
+#ph.add_to_playlist(track_url)

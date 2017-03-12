@@ -425,9 +425,10 @@ class Edi(object):
                     send_message(
                         participant['user_id'],
                         "A new song has been added to poll {}. {}"
-                            .format(poll,
-                                    "Switch to that poll if you want to vote for that song!" if model.get_selected_poll(
-                                        participant['user_id']) != poll else "")
+                            .format(
+                            poll,
+                            "Use 'select poll {}' to vote for songs in that poll!" if
+                            model.get_selected_poll(participant['user_id']) != poll else "")
                     )
 
                     model.set_user_state(poll, participant["user_id"], "waiting")

@@ -423,6 +423,8 @@ class Edi(object):
         poll_participants = model.get_poll_participants(sender_id, poll)
         if isinstance(poll_participants, list):
             for participant in poll_participants:
+                if sender_id == participant['user_id']:
+                    continue
                 if model.get_user_state(poll, participant["user_id"]) is not "waiting":
                     send_message(
                         participant['user_id'],

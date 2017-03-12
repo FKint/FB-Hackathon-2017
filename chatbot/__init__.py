@@ -387,12 +387,19 @@ class Edi(object):
         result = model.suggest_song(sender_id, poll, song_id)
         if result is not None:
             log(result)
-            send_message(
-                sender_id,
-                "I'm sorry, but I can't let you suggest that song. "
-                "Either something went wrong or it is just not my style :/"
-            )
-            return
+            if "Song already in the poll" in result:
+                send_message(
+                    sender_id,
+                    "Someone else has already suggested this song. Be creative!"
+                )
+                return
+            else:
+                send_message(
+                    sender_id,
+                    "I'm sorry, but I can't let you suggest that song. "
+                    "Either something went wrong or it is just not my style :/"
+                )
+                return
         send_message(
             sender_id,
             "I suggested this song and I'll let the other participants in this poll know they can vote for it!"

@@ -27,6 +27,7 @@ def webhook():
     # endpoint for processing incoming messaging events
 
     data = request.get_json()
+    log("RECEIVED DATA: ")
     log(data)  # you may not want to log every incoming message in production, but it's good for testing
 
     if data["object"] == "page":
@@ -54,8 +55,6 @@ def webhook():
                     pass
 
                 if messaging_event.get("postback"):  # user clicked/tapped "postback" button in earlier message
-                    log("Postback received")
-                    log(messaging_event)
                     postback = messaging_event["postback"]
                     edi.handle_postback(sender_id, postback)
 

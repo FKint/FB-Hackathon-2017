@@ -448,7 +448,7 @@ class Edi(object):
         index = 0
         for song in ranking:
             index += 1
-            send_message(sender_id, "Nb. {}: {} ({})".format(index, song['artist'] + " - " + song['name'],
+            send_message(sender_id, "Nb. {}: {} ({})".format(index, song['artist'] + " - " + song['title'],
                                                              song['uri']))
 
     def show_song_option(self, sender_id, message_text, confirmed=False):

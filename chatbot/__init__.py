@@ -218,9 +218,10 @@ class Edi(object):
             return
         send_message(
             sender_id,
-            "I selected poll {} for you. {}".format(
+            "I selected poll {} for you. {}{}".format(
                 poll_name,
-                "You're the ADMIN!" if model.is_admin_of_poll(sender_id, poll_name) else ""
+                "You're the ADMIN! " if model.is_admin_of_poll(sender_id, poll_name) else "",
+                "If you send me 'show song', I'll offer you a random song that you stil need to vote for!"
             )
         )
         self.send_poll_help(sender_id, poll_name)
@@ -427,7 +428,7 @@ class Edi(object):
                         "A new song has been added to poll {}. {}"
                             .format(
                             poll,
-                            "Use 'select poll {}' to vote for songs in that poll!" if
+                            "Use 'select poll {}' to vote for songs in that poll! " if
                             model.get_selected_poll(participant['user_id']) != poll else "")
                     )
 

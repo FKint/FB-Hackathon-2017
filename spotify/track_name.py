@@ -64,6 +64,16 @@ def check_track_with_keywords(message):
     return search_for_name_and_artist(w2, w1)
 
 
+def id_to_url(id):
+    """
+    Returns track url from id
+    """
+    sp = spotipy.Spotify()
+    track = sp.track(id)
+    if track:
+       return track['external_urls']['spotify']
+    return None
+
 def get_metadata(id):
     """
     Returns metadata given track id
@@ -80,3 +90,4 @@ def get_metadata(id):
 #print check_track_with_url("https://open.spotify.com/track/3ZFTkvIE7kyPt6Nu3PEa7V")
 #print check_track_with_keywords("Frank Sinatra - Strangers in the night ")
 #print get_metadata("spotify:track:7BHPGtpuuWWsvE7cCaMuEU")
+#print id_to_url("7BHPGtpuuWWsvE7cCaMuEU")

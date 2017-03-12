@@ -218,7 +218,10 @@ class Edi(object):
             return
         send_message(
             sender_id,
-            "I selected poll {} for you.".format(poll_name)
+            "I selected poll {} for you. {}".format(
+                poll_name,
+                "You're the ADMIN!" if model.is_admin_of_poll(sender_id, poll_name) else ""
+            )
         )
         self.send_poll_help(sender_id, poll_name)
 
@@ -464,7 +467,9 @@ class Edi(object):
         artist, title, uri = spotify.track_name.get_metadata(song_id)
         url = spotify.track_name.id_to_url(song_id)
 
-        message = "What do you think of {} by {}? {}. Find it here {}.".format(title, artist, spotify.track_name.id_to_url(song_id), url)
+        message = "What do you think of {} by {}? {}. Find it here {}.".format(title, artist,
+                                                                               spotify.track_name.id_to_url(song_id),
+                                                                               url)
         buttons = [
             {
                 "type": "postback",

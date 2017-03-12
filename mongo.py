@@ -4,6 +4,7 @@ from pymongo import MongoClient
 
 import facebook
 import spotify.track_name
+from logs import log
 
 # use the below in Heroku with relevant user, pass and mongoprovider
 # heroku create
@@ -162,6 +163,7 @@ class Model:
         friend is given as a name --> convert it to id
         using database
         """
+        log("Trying to invite friend: {}".format(friend_name))
         poll = self.polls.find_one({"poll_name": poll_name, "admin_id": user_id})
         if poll is None:
             return "Error - Poll does not exist or is not owned by user."
@@ -176,7 +178,7 @@ class Model:
                 official_friend_name = actual_friend_name
         if official_friend_name is None:
             return "Error - No valid friend found"
-        friend = self.user_data.find_one({"display_name": friend_name})
+        friend = self.user_data.find_one({"name": friend_name})
         if friend is None:
             return "Friend is not using the bot!"
 

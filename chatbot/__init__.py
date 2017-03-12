@@ -279,20 +279,35 @@ class Edi(object):
             )
         send_message(
             sender_id,
-            "You can show all participants in this poll by sending me 'show participants'."
+            "You can show all participants in this poll by sending me 'show participants'. "
+            "You can ask me to send a song that you can vote for by sending 'show song'. "
+            "You can see the ranking by sending me 'show ranking'.",
+            buttons=[
+                {
+                    "type": "postback",
+                    "title": "Show participants",
+                    "payload": json.dumps({
+                        "action": Edi.ACTION_SHOW_POLL_PARTICIPANTS
+                    })
+                }, {
+                    "type": "postback",
+                    "title": "Show song",
+                    "payload": json.dumps({
+                        "action": Edi.ACTION_SHOW_SONG_OPTION
+                    })
+                }, {
+                    "type": "postback",
+                    "title": "Show ranking",
+                    "payload": json.dumps({
+                        "action": Edi.ACTION_SHOW_RANKING
+                    })
+                },
+            ]
         )
         send_message(
             sender_id,
             "You can suggest a new song for this poll by sending me 'suggest <song>', where "
             "song can be a Spotify song ID, URI or a search string."
-        )
-        send_message(
-            sender_id,
-            "You can ask me to send a song that you can vote for by sending 'show song'."
-        )
-        send_message(
-            sender_id,
-            "You can see the ranking by sending me 'show ranking'."
         )
 
     def show_poll(self, sender_id, message_text):

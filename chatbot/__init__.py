@@ -409,10 +409,10 @@ class Edi(object):
             )
             return
 
-        song_id = track_name.check_track_with_url(message_text)
+        song_id = spotify.track_name.check_track_with_url(message_text)
 
         if song_id is None:
-            song_id = track_name.check_track_with_keywords(message_text)
+            song_id = spotify.track_name.check_track_with_keywords(message_text)
 
         if song_id is None:
             message = "I am sorry, I cannot find anything. Try another song."
@@ -451,9 +451,9 @@ class Edi(object):
                 buttons
             )
         else:
-            song_id = track_name.check_track_with_keywords(message_text)
+            song_id = spotify.track_name.check_track_with_keywords(message_text)
 
-            message = "What do you think of this song? {}".format(spotify.get_song_url(song_id))
+            message = "What do you think of this song? {}".format(spotify.track_name.id_to_url(song_id))
 
             buttons = [
                 {

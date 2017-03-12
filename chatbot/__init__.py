@@ -239,7 +239,7 @@ class Edi(object):
         send_message(
             sender_id,
             "You can suggest a new song for this poll by sending me 'suggest <song>', where "
-            "song can be a Spotify song ID, URI or a string of the format 'Artist - Song'."
+            "song can be a Spotify song ID, URI or a search string."
         )
         send_message(
             sender_id,
@@ -351,7 +351,7 @@ class Edi(object):
             self.write_no_poll_selected(sender_id)
             return
         # TODO: also check other forms of queries
-        song_id = spotify.track_name.check_track_with_url(message_text)
+        song_id = spotify.track_name.check_track_with_url_or_id(message_text)
         if song_id is None:
             # Try to find it based on keywords
             song_id = spotify.track_name.check_track_with_keywords(message_text)

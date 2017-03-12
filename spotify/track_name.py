@@ -19,6 +19,23 @@ def check_track_with_url(message):
     return None
 
 
+def check_track_with_url_or_id(message):
+    from_url = check_track_with_url(message)
+    if from_url is not None:
+        return from_url
+    message = message.strip()
+    sp = spotipy.Spotify()
+    track = sp.track(message)
+    if track is not None:
+        return message
+    if message.startswith("spotify:track:"):
+        track_id = message[len("spotify:track"):]
+        track = sp.track(track_id)
+        if track is not None:
+            return track_id
+    return None
+
+
 def check_track_with_keywords(message):
     """ look for track with artist name or song name
     Returns url
@@ -29,7 +46,6 @@ def check_track_with_keywords(message):
     for r in results['tracks']['items']:
         return r['external_urls']['spotify']
     return None
-
 
 
 def id_to_url(id):
@@ -55,7 +71,7 @@ def get_metadata(id):
         name = track['name'].encode('utf-8')
     return artist, name, uri
 
-#print check_track_with_url("https://open.spotify.com/track/3ZFTkvIE7kyPt6Nu3PEa7V")
-#print check_track_with_keywords("Eminem - Space bound ")
-#print get_metadata("7BHPGtpuuWWsvE7cCaMuEU")
-#print id_to_url("spotify:track:7BHPGtpuuWWsvE7cCaMuEU")
+# print check_track_with_url("https://open.spotify.com/track/3ZFTkvIE7kyPt6Nu3PEa7V")
+# print check_track_with_keywords("Eminem - Space bound ")
+# print get_metadata("7BHPGtpuuWWsvE7cCaMuEU")
+# print id_to_url("spotify:track:7BHPGtpuuWWsvE7cCaMuEU")

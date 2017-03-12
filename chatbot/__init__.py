@@ -193,12 +193,12 @@ class Edi(object):
 
     def get_polls_list_button(self, user_id):
         return {
-                   "type": "postback",
-                   "title": "Show all polls",
-                   "payload": json.dumps({
-                       "action": Edi.ACTION_SHOW_POLLS_LIST
-                   })
-               }
+            "type": "postback",
+            "title": "Show all polls",
+            "payload": json.dumps({
+                "action": Edi.ACTION_SHOW_POLLS_LIST
+            })
+        }
 
     def introduce_bot(self, sender_id, message_text):
         # How to create a poll, list of all polls, show friends
@@ -537,128 +537,136 @@ class Edi(object):
                 if sender_id == participant['user_id']:
                     continue
                 if model.get_user_state(poll, participant["user_id"]) is not "waiting":
-                    send_message(
-                        participant['user_id'],
-                        "A new song has been added to poll {}. {}"
-                            .format(
-                            poll,
-                            "Use 'select poll {}' to vote for songs in that poll! ".format(poll) if
-                            model.get_selected_poll(participant['user_id']) != poll else
-                            "Use 'show song' to get songs for which you can vote!",
+                    if model.get_selected_poll(participant['user_id']) != poll:
+                        send_message(
+                            participant['user_id'],
+                            "A new song has been added to poll {}. Use 'select poll {}' to vote for songs in that poll!"
+                                .format(poll, poll),
+                            buttons={
+                                "type": "postback",
+                                "title": "Select poll {}".format(poll),
+                                "payload": json.dumps({
+                                    "action": Edi.ACTION_SELECT_POLL,
+                                    "poll_name": poll
+                                })
+                            }
+                        )
+                    else:
+                        send_message(
+                            participant['user_id'],
+                            "A new song has been added to poll {}. Use 'show song' to get songs for which you can vote!"
+                                .format(poll),
                             buttons=self.get_poll_select_buttons(sender_id, poll)[:2] + [
                                 self.get_show_song_button()
                             ]
                         )
-                    )
+                        model.set_user_state(poll, participant["user_id"], "waiting")
+            else:
+                log(poll_participants)
+                send_message(
+                    sender_id,
+                    "An error happened, sorry :/"
+                )
 
-                    model.set_user_state(poll, participant["user_id"], "waiting")
-        else:
-            log(poll_participants)
+        def show_ranking(self, sender_id, message_text):
+            # Show top 10 songs
+            # Later: paginator: next 10
+            active_poll = model.get_selected_poll(sender_id)
+            if active_poll is None:
+                self.write_no_poll_selected(sender_id)
+                return
+            ranking = model.get_ranking(sender_id, active_poll)
+            send_message(sender_id, "The current favourite songs are: ")
+            index = 0
+            for song in ranking:
+                index += 1
+                send_message(sender_id,
+                             "Nb. {}: {} ({}) with {} votes".format(index, song['artist'] + " - " + song['title'],
+                                                                    spotify.track_name.id_to_url(song['song_id']),
+                                                                    song['score']))
+
+        def show_song_option(self, sender_id, message_text):
+            # Retrieve random song that user needs to vote for
+            # Present with 0, 1 or cancel button.
+            # No song available: suggest a song
+            poll_id = model.get_selected_poll(sender_id)
+            if poll_id is None:
+                self.write_no_poll_selected(sender_id)
+                return
+            song_id = model.get_song_option(sender_id, poll_id)
+            if song_id is None:
+                send_message(
+                    sender_id,
+                    "I'm sorry, but I don't have any songs that you can vote on. Feel free to suggest some though!"
+                )
+                return
+            artist, title, uri = spotify.track_name.get_metadata(song_id)
+            url = spotify.track_name.id_to_url(song_id)
+
+            message = "What do you think of {} by {}? Find it here {}.".format(title, artist, url)
+            buttons = [
+                {
+                    "type": "postback",
+                    "title": "Like",
+                    "payload": json.dumps({
+                        "song_id": song_id,
+                        "poll_id": poll_id,
+                        "score": 1,
+                        "action": "voting"
+                    })
+                }, {
+                    "type": "postback",
+                    "title": "Dislike",
+                    "payload": json.dumps({
+                        "song_id": song_id,
+                        "poll_id": poll_id,
+                        "score": 0,
+                        "action": "voting"
+                    })
+                },
+            ]
+
             send_message(
                 sender_id,
-                "An error happened, sorry :/"
+                message,
+                buttons
             )
 
-    def show_ranking(self, sender_id, message_text):
-        # Show top 10 songs
-        # Later: paginator: next 10
-        active_poll = model.get_selected_poll(sender_id)
-        if active_poll is None:
-            self.write_no_poll_selected(sender_id)
-            return
-        ranking = model.get_ranking(sender_id, active_poll)
-        send_message(sender_id, "The current favourite songs are: ")
-        index = 0
-        for song in ranking:
-            index += 1
-            send_message(sender_id,
-                         "Nb. {}: {} ({}) with {} votes".format(index, song['artist'] + " - " + song['title'],
-                                                                spotify.track_name.id_to_url(song['song_id']),
-                                                                song['score']))
+        def show_poll_participants(self, sender_id, message_text):
+            poll_id = model.get_selected_poll(sender_id)
 
-    def show_song_option(self, sender_id, message_text):
-        # Retrieve random song that user needs to vote for
-        # Present with 0, 1 or cancel button.
-        # No song available: suggest a song
-        poll_id = model.get_selected_poll(sender_id)
-        if poll_id is None:
-            self.write_no_poll_selected(sender_id)
+            message = "The participants in poll " + (poll_id if poll_id is not None else "NONE") + " are:\n"
+
+            participants = model.get_poll_participants(sender_id, poll_id)
+            if isinstance(participants, list):
+                for participant in participants:
+                    message += participant["display_name"] + "\n"
+
+                send_message(sender_id, message)
+            else:
+                log(participants)
+                send_message(sender_id,
+                             "An error happened, sorry: {}".format(participants))
+
+        def export_list(self, sender_id, message_text):
+            send_message(sender_id, "Unfortunately this functionality is not ready yet!")
             return
-        song_id = model.get_song_option(sender_id, poll_id)
-        if song_id is None:
+            poll = model.get_selected_poll(sender_id)
+            if poll is None:
+                self.write_no_poll_selected(sender_id)
+                return
+            ranking = model.get_ranking(sender_id, poll)
+            handler = spotify.user_playlist.PlaylistHandler()
+            result = handler.add_to_playlist([x['song_id'] for x in ranking])
+            if result is None:
+                send_message(sender_id, "Exported the playlist to your spotify account!")
+                return
             send_message(
                 sender_id,
-                "I'm sorry, but I don't have any songs that you can vote on. Feel free to suggest some though!"
+                "An error occurred when I tried to export the playlist to your Spotify account. "
+                "Please try again later?"
             )
-            return
-        artist, title, uri = spotify.track_name.get_metadata(song_id)
-        url = spotify.track_name.id_to_url(song_id)
 
-        message = "What do you think of {} by {}? Find it here {}.".format(title, artist, url)
-        buttons = [
-            {
-                "type": "postback",
-                "title": "Like",
-                "payload": json.dumps({
-                    "song_id": song_id,
-                    "poll_id": poll_id,
-                    "score": 1,
-                    "action": "voting"
-                })
-            }, {
-                "type": "postback",
-                "title": "Dislike",
-                "payload": json.dumps({
-                    "song_id": song_id,
-                    "poll_id": poll_id,
-                    "score": 0,
-                    "action": "voting"
-                })
-            },
-        ]
-
-        send_message(
-            sender_id,
-            message,
-            buttons
-        )
-
-    def show_poll_participants(self, sender_id, message_text):
-        poll_id = model.get_selected_poll(sender_id)
-
-        message = "The participants in poll " + (poll_id if poll_id is not None else "NONE") + " are:\n"
-
-        participants = model.get_poll_participants(sender_id, poll_id)
-        if isinstance(participants, list):
-            for participant in participants:
-                message += participant["display_name"] + "\n"
-
-            send_message(sender_id, message)
-        else:
-            log(participants)
-            send_message(sender_id,
-                         "An error happened, sorry: {}".format(participants))
-
-    def export_list(self, sender_id, message_text):
-        send_message(sender_id, "Unfortunately this functionality is not ready yet!")
-        return
-        poll = model.get_selected_poll(sender_id)
-        if poll is None:
-            self.write_no_poll_selected(sender_id)
-            return
-        ranking = model.get_ranking(sender_id, poll)
-        handler = spotify.user_playlist.PlaylistHandler()
-        result = handler.add_to_playlist([x['song_id'] for x in ranking])
-        if result is None:
-            send_message(sender_id, "Exported the playlist to your spotify account!")
-            return
-        send_message(
-            sender_id,
-            "An error occurred when I tried to export the playlist to your Spotify account. "
-            "Please try again later?"
-        )
-
-
-if __name__ == "__main__":
-    e = Edi()
-    e.handle_message(os.environ['USER_ID'], "query")
+    if __name__ == "__main__":
+        e = Edi()
+        e.handle_message(os.environ['USER_ID'], "query")

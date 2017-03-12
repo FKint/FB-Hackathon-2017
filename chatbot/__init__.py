@@ -54,7 +54,8 @@ class Edi(object):
         pass
 
     def handle_message(self, sender_id, message_text):
-
+        log("PROCESSING MESSAGE FROM {}".format(sender_id))
+        log(message_text)
         action = self.get_action(message_text)
 
         if spotify.track_name.get_track_from_message(message_text) is not None:

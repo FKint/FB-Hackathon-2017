@@ -54,6 +54,12 @@ class Edi(object):
     def __init__(self):
         pass
 
+    def write_no_poll_selected(self, sender_id):
+        send_message(
+            sender_id,
+            "You haven't selected a poll. Try 'show all polls' and 'select poll <poll>' to select a poll."
+        )
+
     def handle_message(self, sender_id, message_text):
         log("PROCESSING MESSAGE FROM {}".format(sender_id))
         log(message_text)
@@ -277,7 +283,8 @@ class Edi(object):
             )
         send_message(
             sender_id,
-            "You can select another poll by sending me 'select poll <poll>', where <poll> is the name of the poll."
+            "You can select another poll by sending me 'select poll <poll>', where <poll> is the name of the poll.\n"
+            "If you send me 'create poll <poll>', I'll make you admin of one!"
         )
 
     def select_poll(self, sender_id, message_text):
@@ -301,10 +308,7 @@ class Edi(object):
         # Confirm that <friend> has been added to <poll>
         active_poll = model.get_selected_poll(sender_id)
         if active_poll is None:
-            send_message(
-                sender_id,
-                "You haven't selected a poll. Try 'show all polls' and 'select poll <poll>' to select a poll."
-            )
+            self.write_no_poll_selected(sender_id)
             return
         parts = message_text.split()
         if len(parts) < 2:
@@ -341,10 +345,7 @@ class Edi(object):
 
         poll = model.get_selected_poll(sender_id)
         if poll is None:
-            send_message(
-                sender_id,
-                "You haven't selected a poll. Try 'show all polls' and 'select poll <poll>' to select a poll."
-            )
+            self.write_no_poll_selected(sender_id)
             return
         # TODO: also check other forms of queries
         song_id = spotify.track_name.check_track_with_url(message_text)
@@ -435,10 +436,7 @@ class Edi(object):
         # Later: paginator: next 10
         active_poll = model.get_selected_poll(sender_id)
         if active_poll is None:
-            send_message(
-                sender_id,
-                "You haven't selected a poll. Try 'show all polls' and 'select poll <poll>' to select a poll."
-            )
+            self.write_no_poll_selected(sender_id)
             return
         ranking = model.get_ranking(sender_id, active_poll)
         send_message(sender_id, "The current favourite songs are: ")
@@ -454,10 +452,7 @@ class Edi(object):
         # No song available: suggest a song
         poll_id = model.get_selected_poll(sender_id)
         if poll_id is None:
-            send_message(
-                sender_id,
-                "You haven't selected a poll. Try 'show all polls' and 'select poll <poll>' to select a poll."
-            )
+            self.write_no_poll_selected(sender_id)
             return
         song_id = model.get_song_option(sender_id, poll_id)
         if song_id is None:
@@ -520,10 +515,7 @@ class Edi(object):
     def export_list(self, sender_id, message_text):
         poll = model.get_selected_poll(sender_id)
         if poll is None:
-            send_message(
-                sender_id,
-                "You haven't selected a poll. Try 'show all polls' and 'select poll <poll>' to select a poll."
-            )
+            self.write_no_poll_selected(sender_id)
             return
         ranking = model.get_ranking(sender_id, poll)
         handler = spotify.user_playlist.PlaylistHandler()

@@ -204,7 +204,7 @@ class Model:
         songs = sorted(poll["songs"], key=lambda x: sum(x["votes"].values()), reverse=True)
         answ = []
         for song in songs:
-            answ.append({"artist": song["artist"], "uri": song["uri"], "name": song["name"]})
+            answ.append({"artist": song["artist"], "uri": song["uri"] if "uri" in song else "", "name": song["name"]})
         return answ
 
     def get_active_friends(self, person_id):
@@ -241,6 +241,7 @@ class Model:
                     "song_id": song_id,
                     "title": title,
                     "artist": artist,
+                    "uri": uri,
                     "votes": dict(),
                     "suggested_by": user_id
                 }
@@ -331,4 +332,3 @@ class Model:
                     "songs": poll["songs"]
                 }})
                 return
-

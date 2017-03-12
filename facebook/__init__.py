@@ -1,8 +1,8 @@
 USERS = {
     "1363580823709423": "Mihai Enache",
     "1490475977629987": "Floris Kint",
-    "895885400435547": "Ramona Comanescu",
-    "10207488066788000": "Ondrej Bohdal"
+    "1255198037908086": "Ramona Comanescu",
+    "1366251520138208": "Ondrej Bohdal"
 }
 
 

@@ -411,7 +411,7 @@ class Edi(object):
                 sender_id,
                 "There are no songs left for which you can vote. You can still suggest new songs!"
             )
-        message = "What do you think of this song? {}".format(spotify.get_song_url(song_id))
+        message = "What do you think of this song? {}".format(spotify.track_name.id_to_url(song_id))
         buttons = [
             {
                 "type": "postback",

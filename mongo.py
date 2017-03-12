@@ -316,6 +316,14 @@ class Model:
         # check if they have not added the song themselves
         if user_id == poll["songs"]["suggested_by"]:
             return "Error - the song was added by this user."
-        for song in poll["songs"]:
-            if song["song_id"] == song_id:
-                song["votes"][user_id] = score
+        for song_i in range(len(poll["songs"])):
+            if poll["songs"][song_i]["song_id"] == song_id:
+                poll["songs"][song_i]["votes"][user_id] = score
+                self.polls.update({
+                    "poll_name": poll_id
+                }, {
+                    "$set": {
+                        "songs": poll["songs"]
+                    }
+                })
+                return None

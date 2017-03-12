@@ -312,9 +312,9 @@ class Model:
          shouldn't have added the song themself)
          return None upon success, return error string upon failure
         """
-        poll = self.polls.find_one({"poll_name": poll})
+        poll = self.polls.find_one({"poll_name": poll_id})
         # check if the user is participant in the poll
-        if not user_id in poll["participants"]:
+        if user_id not in poll["participants"]:
             return "Error - the user is not a participant in the poll."
         # check if they have not added the song themselves
         if user_id == poll["songs"]["suggested_by"]:
@@ -322,3 +322,9 @@ class Model:
         for song in poll["songs"]:
             if song["song_id"] == song_id:
                 song["votes"][user_id] = score
+                self.polls.update_one({
+                    "poll_name": poll_id
+                }, {"$set": {
+                    "songs": poll["songs"]
+                }})
+                return

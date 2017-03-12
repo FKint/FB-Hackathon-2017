@@ -1,15 +1,8 @@
 import os
-
 from pymongo import MongoClient
-
 import facebook
 import spotify.track_name
 
-# use the below in Heroku with relevant user, pass and mongoprovider
-# heroku create
-# heroku config:set MONGODB_URI=mongodb://user:pass@mongoprovider.com:27409/rest
-
-# create signatures for the methods for getting data
 """
 [new user] Introduce to users
 How to make a poll
@@ -253,7 +246,7 @@ class Model:
            (only returned when user_id is a member of that poll as well). Returns
            the list upon success or <string> when an error occurred.
         """
-        poll = self.polls.find_one({"poll_name": poll, "participants": user_id})
+        poll = self.polls.find_one({"poll_name": poll}) #, "participants": user_id})
         if poll is None:
             return "Error - poll does not exist"
         participants = poll["participants"]
@@ -287,3 +280,20 @@ class Model:
             return self.polls.find_one({"poll_name": poll_id})["participant_states"][user_id]
         except:
             return "Error - either poll_id or user_id is wrong"
+
+    def get_song_option(self, user_id, poll_id):
+        """returns the ID of a song that the user still has to vote for
+        in poll (or None if no such song exists).
+        """
+        poll = self.polls.find_one({"poll_name": poll})
+        for song in poll["songs"]:
+            if self.get_user_state(poll_id, user_id) == "waiting":
+                return song["song_id"]
+
+    def update_user_vote(self, user_id, poll_id, song_id, score):
+        """sets the vote for user_id in poll_id for song_id to score
+         (needs to be 0 or 1, user needs to be participant of the poll,
+         shouldn't have added the song themself)
+         return None upon success, return error string upon failure
+        """
+        return None

@@ -140,6 +140,8 @@ class Edi(object):
             self.select_poll(sender_id, "select poll {}".format(poll_name))
         elif action == Edi.ACTION_SHOW_POLL:
             self.show_poll(sender_id, "")
+        elif action == Edi.ACTION_SHOW_SONG_OPTION:
+            self.show_song_option(sender_id, "")
         else:
             send_message(sender_id, "Undefined action")
 
@@ -562,7 +564,7 @@ class Edi(object):
                                                                 spotify.track_name.id_to_url(song['song_id']),
                                                                 song['score']))
 
-    def show_song_option(self, sender_id, message_text, confirmed=False):
+    def show_song_option(self, sender_id, message_text):
         # Retrieve random song that user needs to vote for
         # Present with 0, 1 or cancel button.
         # No song available: suggest a song

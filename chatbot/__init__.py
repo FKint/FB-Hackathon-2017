@@ -60,6 +60,8 @@ class Edi(object):
         action = self.get_action(message_text)
 
         print "and action = " + (action if action is not None else "")
+        if spotify.track_name.get_track_from_message(message_text) is not None:
+            self.suggest_song(sender_id, message_text)
         if action == Edi.ACTION_INTRODUCE_BOT:
             self.introduce_bot(sender_id, message_text)
         elif action == Edi.ACTION_CREATE_POLL:
@@ -80,6 +82,8 @@ class Edi(object):
             self.show_ranking(sender_id, message_text)
         elif action == Edi.ACTION_SHOW_POLL_PARTICIPANTS:
             self.show_poll_participants(sender_id, message_text)
+        elif action == Edi.ACTION_SUGGEST_SONG:
+            self.suggest_song(sender_id, message_text)
         # TODO: add other cases
 
         else:
@@ -360,7 +364,6 @@ class Edi(object):
                 "A new song has been added to poll {}. Switch to that poll if you want to vote for that song!"
             )
 
-
     def show_ranking(self, sender_id, message_text):
         # Show top 10 songs
         # Later: paginator: next 10
@@ -424,7 +427,7 @@ class Edi(object):
 
             participants = model.get_poll_participants(sender_id, poll_id)
             for participant in participants:
-                message  += participant["display_name"] + "\n"
+                message += participant["display_name"] + "\n"
 
             send_message(sender_id, message)
 
@@ -432,6 +435,7 @@ class Edi(object):
         # Apply vote
         # Confirm vote
         pass
+
 
 if __name__ == "__main__":
     e = Edi()

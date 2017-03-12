@@ -170,9 +170,10 @@ class Model:
             return "Error - No user record found"
         user_friends = facebook.get_user_friends(user_id)
         official_friend_name = None
-        for f in user_friends:
-            if friend_name in f:
-                official_friend_name = friend_name
+        for friend_id in user_friends:
+            actual_friend_name = facebook.get_user_name(friend_id)
+            if friend_name in actual_friend_name:
+                official_friend_name = actual_friend_name
         if official_friend_name is None:
             return "Error - No valid friend found"
         friend = self.user_data.find_one({"display_name": friend_name})

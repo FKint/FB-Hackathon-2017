@@ -445,6 +445,12 @@ class Edi(object):
             )
             return
         song_id = model.get_song_option(sender_id, poll_id)
+        if song_id is None:
+            send_message(
+                sender_id,
+                "I'm sorry, but I don't have any songs that you can vote on. Feel free to suggest some though!"
+            )
+            return
         """song_id = spotify.track_name.check_track_with_url(message_text)
 
         if song_id is None:

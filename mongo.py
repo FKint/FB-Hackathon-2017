@@ -291,6 +291,8 @@ class Model:
         in poll (or None if no such song exists).
         """
         poll = self.polls.find_one({"poll_name": poll_id})
+        log("Songs for poll {}".format(poll_id))
+        log(poll["songs"])
         for song in poll["songs"]:
             if user_id not in song['votes']:
                 return song["song_id"]

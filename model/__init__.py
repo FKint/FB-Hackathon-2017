@@ -1,5 +1,11 @@
 # interaction with MongoDB
+import mongo
 
+data_model = mongo.Model()
+
+
+def register_user(user_id):
+    data_model.register_user(user_id)
 
 
 # Dummy methods - to be deleted
@@ -21,9 +27,7 @@ def select_poll(user_id, poll_name):
 
 
 def create_poll(user_id, poll_name):
-    if "0" in poll_name:
-        return "I don't like zeros, please don't put a zero in the name!"
-    return None
+    return data_model.create_poll(user_id, poll_name)
 
 
 def is_admin_of_poll(user_id, poll_name):

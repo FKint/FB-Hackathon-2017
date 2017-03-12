@@ -302,7 +302,7 @@ class Model:
         log("Songs for poll {}".format(poll_id))
         log(poll["songs"])
         for song in poll["songs"]:
-            if user_id not in song['votes']:
+            if user_id not in song['votes'] and song['suggested_by'] != user_id:
                 return song["song_id"]
         return None
 

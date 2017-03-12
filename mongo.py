@@ -239,7 +239,8 @@ class Model:
                     "song_id": song_id,
                     "title": title,
                     "artist": artist,
-                    "votes": dict()
+                    "votes": dict(),
+                    "suggested_by": user_id
                 }
             }
         })
@@ -268,6 +269,11 @@ class Model:
         """updates the state of the user with user_id
         within the poll with poll_id to state
         """
+        """-> Store whether a user has interacted since the last notification
+         was sent to them (code keeping this in memory is already present
+         in model/__init__.py, but this data should be stored in the
+          database instead of in RAM)
+        """
         poll_participant_states = self.polls.find_one({"poll_name": poll_id})["participant_states"]
         poll_participant_states[user_id] = state
         self.polls.update({
@@ -281,6 +287,7 @@ class Model:
     def get_user_state(self, poll_id, user_id):
         """returns the state of the user with user_id
         within the poll with poll_id
+        default state voting
         """
         try:
             return self.polls.find_one({"poll_name": poll_id})["participant_states"][user_id]
@@ -305,4 +312,13 @@ class Model:
          shouldn't have added the song themself)
          return None upon success, return error string upon failure
         """
-        return None
+        poll = self.polls.find_one({"poll_name": poll})
+        # check if the user is participant in the poll
+        if not user_id in poll["participants"]:
+            return "Error - the user is not a participant in the poll."
+        # check if they have not added the song themselves
+        if user_id == poll["songs"]["suggested_by"]:
+            return "Error - the song was added by this user."
+        for song in poll["songs"]:
+            if song["song_id"] == song_id:
+                song["votes"][user_id] = score

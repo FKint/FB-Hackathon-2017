@@ -18,17 +18,23 @@ def check_track_with_url(message):
     return None
 
 def search_for_name_and_artist(w1,w2):
+    """
+    Nested query for artist and track
+    """
     sp = spotipy.Spotify()
     results = sp.search(q='artist:' + w1, type='artist')
     items = results['artists']['items']
-    ptential=None
+    potential=None
     for artist in items:
         if artist["name"] == w1:
             tracks = sp.artist_top_tracks(artist["uri"])
             for track in tracks['tracks'][:20]:
                 a=re.sub("\W+", "", w2).lower()
-                b=re.sub("\W+", "", track['name']).lower()          
-                potential=track['external_urls']['spotify']
+                b=re.sub("\W+", "", track['name']).lower() 
+                #get a good enough match
+                if potential==None:         
+                    potential=track['external_urls']['spotify']
+                #exact match
                 if a in b or b in a:
                     return potential
     return potential

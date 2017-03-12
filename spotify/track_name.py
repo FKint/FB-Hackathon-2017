@@ -14,7 +14,7 @@ def check_track_with_url(message):
         pattern = re.search("track/(\w+)\W*",message)
         if pattern:
             res=pattern.group(1)
-            return sp.track(res)['uri']
+            return sp.track(res)['id']
     return None
 
 def search_for_name_and_artist(w1,w2):
@@ -73,6 +73,6 @@ def get_metadata(id):
         name = track['name']
     return (artist,name,uri)
 
-#print check_track_with_url("https://open.spotify.com/track/3ZFTkvIE7kyPt6Nu3PEa7V")
-#print check_track_with_keywords("Frank Sinatra - Fly me to the moon ")
-#print get_metadata("3ZFTkvIE7kyPt6Nu3PEa7V")
+print check_track_with_url("https://open.spotify.com/track/3ZFTkvIE7kyPt6Nu3PEa7V")
+#print check_track_with_keywords("Frank Sinatra - Strangers in the night ")
+#print get_metadata("spotify:track:7BHPGtpuuWWsvE7cCaMuEU")

@@ -427,7 +427,7 @@ class Edi(object):
         else:
             poll_id = model.get_selected_poll(sender_id)
 
-            message = "The participants in poll " + poll_id + " are:\n"
+            message = "The participants in poll " + (poll_id if poll_id is not None else "NONE") + " are:\n"
 
             participants = model.get_poll_participants(sender_id, poll_id)
             for participant in participants:

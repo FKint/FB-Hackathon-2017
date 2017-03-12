@@ -313,6 +313,7 @@ class Edi(object):
             return
         error = model.invite_friend(sender_id, active_poll, friend)
         if error is not None:
+            log(error)
             send_message(
                 sender_id,
                 "I couldn't add your friend, please check it's not an imaginary friend of yours ;)"

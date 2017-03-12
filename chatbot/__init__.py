@@ -386,6 +386,7 @@ class Edi(object):
 
         result = model.suggest_song(sender_id, poll, song_id)
         if result is not None:
+            log(result)
             send_message(
                 sender_id,
                 "I'm sorry, but I can't let you suggest that song. "

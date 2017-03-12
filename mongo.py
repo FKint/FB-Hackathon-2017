@@ -251,7 +251,7 @@ class Model:
            (only returned when user_id is a member of that poll as well). Returns
            the list upon success or <string> when an error occurred.
         """
-        poll = self.polls.find_one({"poll_name": poll, "participants": {"$contains": user_id}})
+        poll = self.polls.find_one({"poll_name": poll, "participants": user_id})
         if poll is None:
             return "Error - poll does not exist"
         participants = poll["participants"]

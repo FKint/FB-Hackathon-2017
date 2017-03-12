@@ -63,9 +63,9 @@ def update_user_vote(user_id, poll_id, song_id, score):
 
 def get_poll_participants(user_id, poll_id):
     participants = [
-        {"user_id": "p1", "display_name": "Participant 1"},
-        {"user_id": "p1", "display_name": "Participant 2"},
-        {"user_id": "p1", "display_name": "Participant 3"}
+        {"user_id": "1363580823709423", "display_name": "Participant 1"},
+        {"user_id": "1363580823709423", "display_name": "Participant 2"},
+        {"user_id": "1363580823709423", "display_name": "Participant 3"}
     ]
 
     return participants

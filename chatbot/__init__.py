@@ -136,6 +136,9 @@ class Edi(object):
         elif action == Edi.ACTION_INVITE_FRIEND:
             user_id = payload["user_id"]
             self.invite_friend(sender_id, "invite {}".format(user_id))
+        elif action == Edi.ACTION_SHOW_POLL:
+            poll_name = payload["poll_name"]
+            self.show_poll(sender_id, "show poll {}".format(poll_name))
         else:
             send_message(sender_id, "Undefined action")
 
@@ -325,11 +328,29 @@ class Edi(object):
             )
         send_message(
             sender_id,
-            "You can see all polls by sending me 'show all polls'."
+            "You can see all polls by sending me 'show all polls'. "
+            "You can select another poll by sending me 'select poll <poll>', where <poll> is the name of the poll.",
+            buttons=[
+                        {
+                            "type": "postback",
+                            "title": "Show all polls",
+                            "payload": json.dumps({
+                                "action": Edi.ACTION_SHOW_POLLS_LIST
+                            })
+                        }] + [
+                        {
+                            "type": "postback",
+                            "title": "Show poll {}".format(x),
+                            "payload": json.dumps({
+                                "action": Edi.ACTION_SHOW_POLL,
+                                "poll_name": x
+                            })
+                        } for x in model.get_polls_for_user(sender_id) if poll_name != x
+                        ][:5]
         )
         send_message(
             sender_id,
-            "You can select another poll by sending me 'select poll <poll>', where <poll> is the name of the poll."
+
         )
 
     def show_polls_list(self, sender_id, message_text):

@@ -206,7 +206,7 @@ class Model:
         answ = []
         for song in songs:
             answ.append({"artist": song["artist"], "uri": song["uri"] if "uri" in song else "", "title": song["title"],
-                         "song_id": song["song_id"]})
+                         "song_id": song["song_id"], "score": sum(song["votes"].values())})
         return answ
 
     def get_active_friends(self, person_id):

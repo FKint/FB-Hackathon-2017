@@ -414,11 +414,6 @@ class Edi(object):
         artist, title, uri = spotify.track_name.get_metadata(song_id)
         # TODO: Try to add a nice preview
         message = "What do you think of {} by {}? {}".format(title, artist, spotify.track_name.id_to_url(song_id))
-        send_message(
-            sender_id,
-            message
-        )
-        message = "Please vote!"
         buttons = [
             {
                 "type": "postback",

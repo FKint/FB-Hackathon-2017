@@ -57,7 +57,7 @@ def get_poll_participants(user_id, poll_id):
 
 
 def suggest_song(user_id, poll, song_id):
-    return None
+    return data_model.suggest_song(user_id, poll, song_id)
 
 
 user_state = dict()

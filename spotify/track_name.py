@@ -34,7 +34,7 @@ def search_for_name_and_artist(w1, w2):
                 a = re.sub("\W+", "", w2).lower()
                 b = re.sub("\W+", "", track['name']).lower()
                 # get a good enough match
-                if potential == None:
+                if potential is None:
                     potential = track['external_urls']['spotify']
                 # exact match
                 if a in b or b in a:

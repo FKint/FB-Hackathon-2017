@@ -42,8 +42,8 @@ class Model:
         "poll_name": poll_name,
         "admin_id" admin_id,
         "participants": [user_id_1, user_id_2, user_id_3, user_id_4]
-        "songs": [{"artist": "ad", "name": "a2", "uri": "fg@sf", "score":0},
-                  {"artist": "ad2", "name": "a22", "uri": "fg@s2f", "score":0}}],
+        "songs": [{"artist": "ad", "name": "a2", "uri": "fg@sf"},
+                  {"artist": "ad2", "name": "a22", "uri": "fg@s2f"}}],
         "participant_states": {"user12": "waiting", "user324": "waiting"}
         }
 
@@ -200,7 +200,8 @@ class Model:
         poll = self.polls.find_one({"poll_name": poll, "admin_id": user_id})
         if not poll:
             return "Error - either poll or user_id does not exist."
-        songs = sorted(poll["songs"], key=lambda x: x["score"], reverse=True)
+        # scores will be just the sums of values given by the users as scores
+        songs = sorted(poll["songs"], key=lambda x: sum(x["votes"].values()), reverse=True)
         answ = []
         for song in songs:
             answ.append({"artist": song["artist"], "uri": song["uri"], "name": song["name"]})

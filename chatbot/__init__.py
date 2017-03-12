@@ -107,6 +107,9 @@ class Edi(object):
                     send_message(sender_id, "Thanks, your vote has been recorded!")
                 else:
                     send_message(sender_id, "I am sorry, there was an error: " + error)
+        elif action == "confirming":
+            if score == 1:
+                self.suggest_song(sender_id, message_text, confirmed=True)
         else:
             send_message(sender_id, "Undefined action")
 
@@ -394,7 +397,7 @@ class Edi(object):
             send_message(sender_id, "Nb. {}: {} ({})".format(index, song['artist'] + " - " + song['name'],
                                                              song['uri']))
 
-    def show_song_option(self, sender_id, message_text):
+    def show_song_option(self, sender_id, message_text, confirmed=False):
         # Retrieve random song that user needs to vote for
         # Present with 0, 1 or cancel button.
         # No song available: suggest a song
@@ -405,41 +408,80 @@ class Edi(object):
                 "You haven't selected a poll. Try 'show all polls' and 'select poll <poll>' to select a poll."
             )
             return
-        song_id = model.get_song_option(sender_id, poll_id)
+
+        song_id = track_name.check_track_with_url(message_text)
+
         if song_id is None:
+            song_id = track_name.check_track_with_keywords(message_text)
+
+        if song_id is None:
+            message = "I am sorry, I cannot find anything. Try another song."
+            send_message(sender_id, message)
+            return
+            
+        if not confirmed:
+
+            message = "Is this the suggestion you want to make?"
+            buttons = [
+                {
+                    "type": "postback",
+                    "title": "No",
+                    "payload": json.dumps({
+                        "song_id": song_id,
+                        "poll_id": poll_id,
+                        "score": 0,
+                        "action": "confirming"
+                    })
+                },
+                {
+                    "type": "postback",
+                    "title": "Yes",
+                    "payload": json.dumps({
+                        "song_id": song_id,
+                        "poll_id": poll_id,
+                        "score": 1,
+                        "action": "confirming"
+                    })
+                }
+            ]
+
             send_message(
                 sender_id,
-                "There are no songs left for which you can vote. You can still suggest new songs!"
+                message,
+                buttons
             )
-        message = "What do you think of this song? {}".format(spotify.get_song_url(song_id))
-        buttons = [
-            {
-                "type": "postback",
-                "title": "Dislike",
-                "payload": json.dumps({
-                    "song_id": song_id,
-                    "poll_id": poll_id,
-                    "score": 0,
-                    "action": "voting"
-                })
-            },
-            {
-                "type": "postback",
-                "title": "Like",
-                "payload": json.dumps({
-                    "song_id": song_id,
-                    "poll_id": poll_id,
-                    "score": 1,
-                    "action": "voting"
-                })
-            }
-        ]
+        else:
+            song_id = track_name.check_track_with_keywords(message_text)
 
-        send_message(
-            sender_id,
-            message,
-            buttons
-        )
+            message = "What do you think of this song? {}".format(spotify.get_song_url(song_id))
+
+            buttons = [
+                {
+                    "type": "postback",
+                    "title": "Dislike",
+                    "payload": json.dumps({
+                        "song_id": song_id,
+                        "poll_id": poll_id,
+                        "score": 0,
+                        "action": "voting"
+                    })
+                },
+                {
+                    "type": "postback",
+                    "title": "Like",
+                    "payload": json.dumps({
+                        "song_id": song_id,
+                        "poll_id": poll_id,
+                        "score": 1,
+                        "action": "voting"
+                    })
+                }
+            ]
+            send_message(
+                sender_id,
+                message,
+                buttons
+            )
 
     def show_poll_participants(self, sender_id, message_text):
         if len(message_text.split()) != 2:

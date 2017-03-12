@@ -13,7 +13,7 @@ def check_track_with_url(message):
     if "spotify.com" in message:
         pattern = re.search("track/(\w+)\W*", message)
         if pattern:
-            res=pattern.group(1)
+            res = pattern.group(1)
             return sp.track(res)['id']
 
     return None
@@ -39,8 +39,9 @@ def id_to_url(id):
     sp = spotipy.Spotify()
     track = sp.track(id)
     if track:
-       return track['external_urls']['spotify']
+        return track['external_urls']['spotify']
     return None
+
 
 def get_metadata(id):
     """
@@ -53,7 +54,6 @@ def get_metadata(id):
         uri = track['uri']
         name = track['name']
     return artist, name, uri
-
 
 #print check_track_with_url("https://open.spotify.com/track/3ZFTkvIE7kyPt6Nu3PEa7V")
 #print check_track_with_keywords("Eminem - Space bound ")

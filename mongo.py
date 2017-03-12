@@ -6,11 +6,6 @@ import facebook
 import spotify.track_name
 from logs import log
 
-# use the below in Heroku with relevant user, pass and mongoprovider
-# heroku create
-# heroku config:set MONGODB_URI=mongodb://user:pass@mongoprovider.com:27409/rest
-
-# create signatures for the methods for getting data
 """
 [new user] Introduce to users
 How to make a poll
@@ -47,8 +42,8 @@ class Model:
         "poll_name": poll_name,
         "admin_id" admin_id,
         "participants": [user_id_1, user_id_2, user_id_3, user_id_4]
-        "songs": [{"artist": "ad", "name": "a2", "uri": "fg@sf", "score":0},
-                  {"artist": "ad2", "name": "a22", "uri": "fg@s2f", "score":0}}],
+        "songs": [{"artist": "ad", "name": "a2", "uri": "fg@sf"},
+                  {"artist": "ad2", "name": "a22", "uri": "fg@s2f"}}],
         "participant_states": {"user12": "waiting", "user324": "waiting"}
         }
 
@@ -205,10 +200,12 @@ class Model:
         poll = self.polls.find_one({"poll_name": poll, "admin_id": user_id})
         if not poll:
             return "Error - either poll or user_id does not exist."
-        songs = sorted(poll["songs"], key=lambda x: x["score"], reverse=True)
+        # scores will be just the sums of values given by the users as scores
+        songs = sorted(poll["songs"], key=lambda x: sum(x["votes"].values()), reverse=True)
         answ = []
         for song in songs:
-            answ.append({"artist": song["artist"], "uri": song["uri"], "name": song["name"]})
+            answ.append({"artist": song["artist"], "uri": song["uri"] if "uri" in song else "", "title": song["title"]})
+        return answ
 
     def get_active_friends(self, person_id):
         """This method returns the friends using the application
@@ -229,21 +226,24 @@ class Model:
            None on success or a string with an
            error message when something goes wrong.
         """
-        poll = self.polls.find_one({"poll_name": poll_id, "admin_id": user_id})
+        poll = self.polls.find_one({"poll_name": poll_id})
         if poll is None:
             return "Error - No such poll found"
+        log("Finding song {} in {}".format(song_id, poll['songs']))
         if song_id in map(lambda x: x['song_id'], poll['songs']):
             return "Error - Song already in the poll"
-        title, artist, uri = spotify.track_name.get_metadata(song_id)
+        artist, title, uri = spotify.track_name.get_metadata(song_id)
         self.polls.update({
             "poll_name": poll_id
         }, {
-            "$insert": {
+            "$push": {
                 "songs": {
                     "song_id": song_id,
                     "title": title,
                     "artist": artist,
-                    "votes": dict()
+                    "uri": uri,
+                    "votes": dict(),
+                    "suggested_by": user_id
                 }
             }
         })
@@ -257,7 +257,7 @@ class Model:
            (only returned when user_id is a member of that poll as well). Returns
            the list upon success or <string> when an error occurred.
         """
-        poll = self.polls.find_one({"poll_name": poll, "participants": user_id})
+        poll = self.polls.find_one({"poll_name": poll})  # , "participants": user_id})
         if poll is None:
             return "Error - poll does not exist"
         participants = poll["participants"]
@@ -272,6 +272,11 @@ class Model:
         """updates the state of the user with user_id
         within the poll with poll_id to state
         """
+        """-> Store whether a user has interacted since the last notification
+         was sent to them (code keeping this in memory is already present
+         in model/__init__.py, but this data should be stored in the
+          database instead of in RAM)
+        """
         poll_participant_states = self.polls.find_one({"poll_name": poll_id})["participant_states"]
         poll_participant_states[user_id] = state
         self.polls.update({
@@ -282,12 +287,48 @@ class Model:
             }
         })
 
-
     def get_user_state(self, poll_id, user_id):
         """returns the state of the user with user_id
         within the poll with poll_id
+        default state voting
         """
         try:
             return self.polls.find_one({"poll_name": poll_id})["participant_states"][user_id]
         except:
             return "Error - either poll_id or user_id is wrong"
+
+    def get_song_option(self, user_id, poll_id):
+        """returns the ID of a song that the user still has to vote for
+        in poll (or None if no such song exists).
+        """
+        poll = self.polls.find_one({"poll_name": poll_id})
+        log("Songs for poll {}".format(poll_id))
+        log(poll["songs"])
+        for song in poll["songs"]:
+            if user_id not in song['votes'] and song['suggested_by'] != user_id:
+                return song["song_id"]
+        return None
+
+    def update_user_vote(self, user_id, poll_id, song_id, score):
+        """sets the vote for user_id in poll_id for song_id to score
+         (needs to be 0 or 1, user needs to be participant of the poll,
+         shouldn't have added the song themself)
+         return None upon success, return error string upon failure
+        """
+        poll = self.polls.find_one({"poll_name": poll_id})
+        # check if the user is participant in the poll
+        if user_id not in poll["participants"]:
+            return "Error - the user is not a participant in the poll."
+        log("Finding song {} in {}".format(song_id, poll['songs']))
+        for song in poll["songs"]:
+            if song["song_id"] == song_id:
+                # check if they have not added the song themselves
+                if user_id == song["suggested_by"]:
+                    return "Error - the song was added by this user."
+                song["votes"][user_id] = score
+                self.polls.update_one({
+                    "poll_name": poll_id
+                }, {"$set": {
+                    "songs": poll["songs"]
+                }})
+                return

@@ -107,6 +107,9 @@ class Edi(object):
                     send_message(sender_id, "Thanks, your vote has been recorded!")
                 else:
                     send_message(sender_id, "I am sorry, there was an error: " + error)
+        elif action == "confirming":
+            if score == 1:
+                self.suggest_song(sender_id, spotify.track_name.id_to_url(song_id), confirmed=True)
         else:
             send_message(sender_id, "Undefined action")
 
@@ -135,7 +138,8 @@ class Edi(object):
         "invite": ACTION_INVITE_FRIEND,
         "show all polls": ACTION_SHOW_POLLS_LIST,
         "show ranking": ACTION_SHOW_RANKING,
-        "show participants": ACTION_SHOW_POLL_PARTICIPANTS
+        "show participants": ACTION_SHOW_POLL_PARTICIPANTS,
+        "suggest": ACTION_SUGGEST_SONG
     }
 
     def get_action(self, message_text):
@@ -324,20 +328,12 @@ class Edi(object):
             "I added your friend to the poll!"
         )
 
-    def suggest_song(self, sender_id, message_text):
+    def suggest_song(self, sender_id, message_text, confirmed=False):
         # Confirm that <song> has been added to <poll>
         # Show picture of the song
         if message_text.startswith("suggest "):
             message_text = message_text[len("suggest: "):]
-        # TODO: also check other forms of queries
-        song_id = spotify.track_name.check_track_with_url(message_text)
-        if song_id is None:
-            send_message(
-                sender_id,
-                "I don't know that song, I haven't heard that name in Donkey's years! "
-                "Maybe try giving me its Spotify ID?"
-            )
-            return
+
         poll = model.get_selected_poll(sender_id)
         if poll is None:
             send_message(
@@ -345,14 +341,75 @@ class Edi(object):
                 "You haven't selected a poll. Try 'show all polls' and 'select poll <poll>' to select a poll."
             )
             return
+        # TODO: also check other forms of queries
+        song_id = spotify.track_name.check_track_with_url(message_text)
+        if song_id is None:
+            # Try to find it based on keywords
+
+            if "-" not in message_text:
+                send_message(
+                    sender_id,
+                    "Please follow the format <artist> - <song name> (include a '-' between the artist and the song name)"
+                )
+                return
+                
+            song_id = spotify.track_name.check_track_with_keywords(message_text)
+            if song_id is None:
+                send_message(
+                    sender_id,
+                    "I don't know that song, I haven't heard that name in Donkey's years! "
+                    "Maybe try giving me its Spotify ID?"
+                )
+                return
+            if not confirmed:
+                artist, title, uri = spotify.track_name.get_metadata(song_id)
+                message = "Is {} by {} the suggestion you want to make?".format(title, artist)
+                buttons = [
+                    {
+                        "type": "postback",
+                        "title": "No",
+                        "payload": json.dumps({
+                            "song_id": song_id,
+                            "poll_id": poll,
+                            "score": 0,
+                            "action": "confirming"
+                        })
+                    },
+                    {
+                        "type": "postback",
+                        "title": "Yes",
+                        "payload": json.dumps({
+                            "song_id": song_id,
+                            "poll_id": poll,
+                            "score": 1,
+                            "action": "confirming"
+                        })
+                    }
+                ]
+
+                send_message(
+                    sender_id,
+                    message,
+                    buttons
+                )
+                return
+
         result = model.suggest_song(sender_id, poll, song_id)
         if result is not None:
-            send_message(
-                sender_id,
-                "I'm sorry, but I can't let you suggest that song. "
-                "Either something went wrong or it is just not my style :/"
-            )
-            return
+            log(result)
+            if "Song already in the poll" in result:
+                send_message(
+                    sender_id,
+                    "Someone else has already suggested this song. Be creative!"
+                )
+                return
+            else:
+                send_message(
+                    sender_id,
+                    "I'm sorry, but I can't let you suggest that song. "
+                    "Either something went wrong or it is just not my style :/"
+                )
+                return
         send_message(
             sender_id,
             "I suggested this song and I'll let the other participants in this poll know they can vote for it!"
@@ -391,10 +448,10 @@ class Edi(object):
         index = 0
         for song in ranking:
             index += 1
-            send_message(sender_id, "Nb. {}: {} ({})".format(index, song['artist'] + " - " + song['name'],
+            send_message(sender_id, "Nb. {}: {} ({})".format(index, song['artist'] + " - " + song['title'],
                                                              song['uri']))
 
-    def show_song_option(self, sender_id, message_text):
+    def show_song_option(self, sender_id, message_text, confirmed=False):
         # Retrieve random song that user needs to vote for
         # Present with 0, 1 or cancel button.
         # No song available: suggest a song
@@ -409,9 +466,86 @@ class Edi(object):
         if song_id is None:
             send_message(
                 sender_id,
-                "There are no songs left for which you can vote. You can still suggest new songs!"
+                "I'm sorry, but I don't have any songs that you can vote on. Feel free to suggest some though!"
             )
-        message = "What do you think of this song? {}".format(spotify.get_song_url(song_id))
+            return
+        """song_id = spotify.track_name.check_track_with_url(message_text)
+
+        if song_id is None:
+            song_id = spotify.track_name.check_track_with_keywords(message_text)
+
+        if song_id is None:
+            message = "I am sorry, I cannot find anything. Try another song."
+            send_message(sender_id, message)
+            return
+            
+        if not confirmed:
+
+            message = "Is this the suggestion you want to make?"
+            buttons = [
+                {
+                    "type": "postback",
+                    "title": "No",
+                    "payload": json.dumps({
+                        "song_id": song_id,
+                        "poll_id": poll_id,
+                        "score": 0,
+                        "action": "confirming"
+                    })
+                },
+                {
+                    "type": "postback",
+                    "title": "Yes",
+                    "payload": json.dumps({
+                        "song_id": song_id,
+                        "poll_id": poll_id,
+                        "score": 1,
+                        "action": "confirming"
+                    })
+                }
+            ]
+
+            send_message(
+                sender_id,
+                message,
+                buttons
+            )
+        else:
+            song_id = spotify.track_name.check_track_with_keywords(message_text)
+
+            message = "What do you think of this song? {}".format(spotify.track_name.id_to_url(song_id))
+
+            buttons = [
+                {
+                    "type": "postback",
+                    "title": "Dislike",
+                    "payload": json.dumps({
+                        "song_id": song_id,
+                        "poll_id": poll_id,
+                        "score": 0,
+                        "action": "voting"
+                    })
+                },
+                {
+                    "type": "postback",
+                    "title": "Like",
+                    "payload": json.dumps({
+                        "song_id": song_id,
+                        "poll_id": poll_id,
+                        "score": 1,
+                        "action": "voting"
+                    })
+                }
+            ]
+            send_message(
+                sender_id,
+                message,
+                buttons
+            )
+"""
+        artist, title, uri = spotify.track_name.get_metadata(song_id)
+        # TODO: Try to add a nice preview
+        message = "What do you think of {} by {}? {}".format(title, artist, spotify.track_name.id_to_url(song_id))
         buttons = [
             {
                 "type": "postback",

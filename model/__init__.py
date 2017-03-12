@@ -38,11 +38,7 @@ def invite_friend(user_id, poll_name, friend):
 
 
 def get_ranking(user_id, poll_name):
-    return [
-        {"name": "Naive", "artist": "The Kooks", "uri": "spotify:track:7BHPGtpuuWWsvE7cCaMuEU"},
-        {"name": "Roxanne", "artist": "The Police", "uri": "spotify:track:2NMgVh5qaPprKTEzFe3501"},
-        {"name": "Like a stone", "artist": "Audioslave", "uri": "spotify:track:3YuaBvuZqcwN3CEAyyoaei"},
-    ]
+    return data_model.get_ranking(user_id, poll_name)
 
 
 def update_user_vote(user_id, poll_id, song_id, score):

@@ -217,7 +217,7 @@ class Model:
         for friend in facebook_friends:
             friend_data = self.user_data.find_one({"user_id": friend})
             if friend_data is not None:
-                active_friends.append({"user_id": friend, "display_name": friend['name']})
+                active_friends.append({"user_id": friend, "display_name": friend_data['name']})
         return active_friends
 
     def suggest_song(self, user_id, poll_id, song_id):
@@ -253,7 +253,7 @@ class Model:
            (only returned when user_id is a member of that poll as well). Returns
            the list upon success or <string> when an error occurred.
         """
-        poll = self.polls.find_one({"poll_name": poll, "participants": {"$contains": user_id}})
+        poll = self.polls.find_one({"poll_name": poll, "participants": user_id})
         if poll is None:
             return "Error - poll does not exist"
         participants = poll["participants"]

@@ -5,18 +5,12 @@ data_model = mongo.Model()
 
 
 def register_user(user_id):
-    data_model.register_user(user_id)
+    return data_model.register_user(user_id)
 
 
 # Dummy methods - to be deleted
 def get_active_friends(user_id):
-    friends = [
-        {"user_id": "f1", "display_name": "Friend 1"},
-        {"user_id": "f2", "display_name": "Friend 2"},
-        {"user_id": "f3", "display_name": "Friend 3"},
-    ]
-
-    return friends
+    return data_model.get_active_friends(user_id)
 
 
 def select_poll(user_id, poll_name):
@@ -40,9 +34,7 @@ def get_polls_for_user(user_id):
 
 
 def invite_friend(user_id, poll_name, friend):
-    if friend not in get_active_friends(user_id):
-        return "That's an imaginary friend?"
-    return None
+    return data_model.invite_friend(user_id, poll_name, friend)
 
 
 def get_ranking(user_id, poll_name):

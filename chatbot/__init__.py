@@ -258,27 +258,31 @@ class Edi(object):
         )
         self.send_poll_help(sender_id, poll_name)
 
+    def get_friend_invite_buttons(self, user_id, poll_name):
+        friends = list(
+            set(model.get_active_friends(user_id)) - set(model.get_poll_participants(user_id, poll_name)))
+        return [
+            {
+                "type": "postback",
+                "title": "Invite {}".format(friend['display_name']),
+                "payload": json.dumps({
+                    "user_id": friend['user_id'],
+                    "score": 1,
+                    "action": Edi.ACTION_INVITE_FRIEND
+                })
+            } for friend in friends[:5]
+            ]
+
     def send_poll_help(self, sender_id, poll_name):
         if model.is_admin_of_poll(sender_id, poll_name):
             log(model.get_active_friends(sender_id))
             log(model.get_poll_participants(sender_id, poll_name))
-            friends = list(
-                set(model.get_active_friends(sender_id)) - set(model.get_poll_participants(sender_id, poll_name)))
+
             send_message(
                 sender_id,
                 "You can invite friends to this poll by sending me 'invite <friend_name>'. "
                 "Note that you can only invite friends which have talked to me before.",
-                buttons=[
-                    {
-                        "type": "postback",
-                        "title": "Invite {}".format(friend['display_name']),
-                        "payload": json.dumps({
-                            "user_id": friend['user_id'],
-                            "score": 1,
-                            "action": Edi.ACTION_INVITE_FRIEND
-                        })
-                    } for friend in friends[:5]
-                    ]
+                buttons=self.get_friend_invite_buttons(sender_id, poll_name)
             )
         send_message(
             sender_id,
@@ -292,13 +296,7 @@ class Edi(object):
                     "payload": json.dumps({
                         "action": Edi.ACTION_SHOW_POLL_PARTICIPANTS
                     })
-                }, {
-                    "type": "postback",
-                    "title": "Show song",
-                    "payload": json.dumps({
-                        "action": Edi.ACTION_SHOW_SONG_OPTION
-                    })
-                }, {
+                }, self.get_show_song_button(), {
                     "type": "postback",
                     "title": "Show ranking",
                     "payload": json.dumps({
@@ -312,6 +310,15 @@ class Edi(object):
             "You can suggest a new song for this poll by sending me 'suggest <song>', where "
             "song can be a Spotify song ID, URI or a search string."
         )
+
+    def get_show_song_button(self):
+        return {
+            "type": "postback",
+            "title": "Show song",
+            "payload": json.dumps({
+                "action": Edi.ACTION_SHOW_SONG_OPTION
+            })
+        }
 
     def show_poll(self, sender_id, message_text):
         # Which is the currently active poll, how to switch polls, how to see all polls
@@ -337,21 +344,20 @@ class Edi(object):
                             "payload": json.dumps({
                                 "action": Edi.ACTION_SHOW_POLLS_LIST
                             })
-                        }] + [
-                        {
-                            "type": "postback",
-                            "title": "Show poll {}".format(x),
-                            "payload": json.dumps({
-                                "action": Edi.ACTION_SHOW_POLL,
-                                "poll_name": x
-                            })
-                        } for x in model.get_polls_for_user(sender_id) if poll_name != x
-                        ][:5]
+                        }] + self.get_poll_select_buttons(sender_id, exception=poll_name)
         )
-        send_message(
-            sender_id,
 
-        )
+    def get_poll_select_buttons(self, user_id, exception=None):
+        return [
+                   {
+                       "type": "postback",
+                       "title": "Show poll {}".format(x),
+                       "payload": json.dumps({
+                           "action": Edi.ACTION_SHOW_POLL,
+                           "poll_name": x
+                       })
+                   } for x in model.get_polls_for_user(user_id) if exception != x
+                   ][:5]
 
     def show_polls_list(self, sender_id, message_text):
         polls = model.get_polls_for_user(sender_id)
@@ -368,7 +374,8 @@ class Edi(object):
         send_message(
             sender_id,
             "You can select another poll by sending me 'select poll <poll>', where <poll> is the name of the poll.\n"
-            "If you send me 'create poll <poll>', I'll make you admin of one!"
+            "If you send me 'create poll <poll>', I'll make you admin of one!",
+            buttons=self.get_poll_select_buttons(sender_id)
         )
 
     def select_poll(self, sender_id, message_text):
@@ -378,7 +385,8 @@ class Edi(object):
             send_message(
                 sender_id,
                 "If you want me to select you a new poll, please send the following command: 'select poll <name>'"
-                "where name should be a string without whitespace.")
+                "where name should be a string without whitespace.",
+                buttons=self.get_poll_select_buttons(sender_id))
             return
 
         poll_name = parts[-1]
@@ -386,7 +394,10 @@ class Edi(object):
         if model.select_poll(sender_id, poll_name) is None:
             send_message(sender_id,
                          "Poll successfully selected. If you send me 'show song', "
-                         "I'll offer you a random song that you stil need to vote for!")
+                         "I'll offer you a random song that you stil need to vote for!",
+                         buttons=[
+                             self.get_show_song_button()
+                         ])
         else:
             send_message(sender_id, "Error occurred when trying to select the poll")
 
@@ -400,7 +411,8 @@ class Edi(object):
         if len(parts) < 2:
             send_message(
                 sender_id,
-                "Please add your friend's name: 'invite <friend>'."
+                "Please add your friend's name: 'invite <friend>'.",
+                buttons=self.get_friend_invite_buttons(sender_id, active_poll)
             )
             return
         friend = " ".join(parts[1:])
@@ -514,7 +526,11 @@ class Edi(object):
                             poll,
                             "Use 'select poll {}' to vote for songs in that poll! ".format(poll) if
                             model.get_selected_poll(participant['user_id']) != poll else
-                            "Use 'show song' to get songs for which you can vote!")
+                            "Use 'show song' to get songs for which you can vote!",
+                            buttons=self.get_poll_select_buttons(sender_id, poll) + [
+                                self.get_show_song_button()
+                            ]
+                        )
                     )
 
                     model.set_user_state(poll, participant["user_id"], "waiting")

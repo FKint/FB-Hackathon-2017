@@ -5,6 +5,7 @@ import requests
 
 import model
 import spotify.track_name
+import spotify.user_playlist
 from logs import log
 
 
@@ -80,6 +81,8 @@ class Edi(object):
             self.show_poll_participants(sender_id, message_text)
         elif action == Edi.ACTION_SUGGEST_SONG:
             self.suggest_song(sender_id, message_text)
+        elif action == Edi.ACTION_EXPORT_LIST:
+            self.export_list(sender_id, message_text)
         # TODO: add other cases
         elif spotify.track_name.check_track_with_url(message_text) is not None:
             log("Recognizes spotify URL")
@@ -125,6 +128,7 @@ class Edi(object):
     ACTION_SHOW_RANKING = "ACTION_SHOW_RANKING"
     ACTION_SHOW_SONG_OPTION = "ACTION_SHOW_SONG_OPTION"
     ACTION_VOTE_SONG_OPTION = "ACTION_VOTE_SONG_OPTION"
+    ACTION_EXPORT_LIST = "ACTION_EXPORT_LIST"
 
     PREFIX_ACTIONS = {
         "help": ACTION_INTRODUCE_BOT,
@@ -139,7 +143,8 @@ class Edi(object):
         "show all polls": ACTION_SHOW_POLLS_LIST,
         "show ranking": ACTION_SHOW_RANKING,
         "show participants": ACTION_SHOW_POLL_PARTICIPANTS,
-        "suggest": ACTION_SUGGEST_SONG
+        "suggest": ACTION_SUGGEST_SONG,
+        "export": ACTION_EXPORT_LIST
     }
 
     def get_action(self, message_text):
@@ -346,13 +351,14 @@ class Edi(object):
         if song_id is None:
             # Try to find it based on keywords
 
+            """
             if "-" not in message_text:
                 send_message(
                     sender_id,
                     "Please follow the format <artist> - <song name> (include a '-' between the artist and the song name)"
                 )
                 return
-                
+            """
             song_id = spotify.track_name.check_track_with_keywords(message_text)
             if song_id is None:
                 send_message(
@@ -594,10 +600,25 @@ class Edi(object):
                 send_message(sender_id,
                              "An error happened, sorry: {}".format(participants))
 
-    def vote_song_option(self, sender_id, message_text):
-        # Apply vote
-        # Confirm vote
-        pass
+    def export_list(self, sender_id, message_text):
+        poll = model.get_selected_poll(sender_id)
+        if poll is None:
+            send_message(
+                sender_id,
+                "You haven't selected a poll. Try 'show all polls' and 'select poll <poll>' to select a poll."
+            )
+            return
+        ranking = model.get_ranking(sender_id, poll)
+        handler = spotify.user_playlist.PlaylistHandler()
+        result = handler.add_to_playlist([x['song_id'] for x in ranking])
+        if result is None:
+            send_message(sender_id, "Exported the playlist to your spotify account!")
+            return
+        send_message(
+            sender_id,
+            "An error occurred when I tried to export the playlist to your Spotify account. "
+            "Please try again later?"
+        )
 
 
 if __name__ == "__main__":

@@ -1,7 +1,10 @@
-from pymongo import MongoClient
 import os
-import datetime
-import json
+
+from pymongo import MongoClient
+
+import facebook
+import spotify.track_name
+
 # use the below in Heroku with relevant user, pass and mongoprovider
 # heroku create
 # heroku config:set MONGODB_URI=mongodb://user:pass@mongoprovider.com:27409/rest
@@ -34,6 +37,7 @@ Import songs from Spotify
 [show option] Selects a random song suggested by one of the users, for which this user has not voted yet.
 [button for rating] Votes
 """
+
 
 class Model:
     def __init__(self):
@@ -74,17 +78,24 @@ class Model:
         "name": name
         }
         """
-        MONGODB_URI = "mongodb://heroku_f0s5338v:kurrih7o6a72idgjr2bf3c7g6d@ds129030.mlab.com:29030/heroku_f0s5338v"
-        # MONGODB_URI = "mongodb://user:pass@mongoprovider.com:27409/rest"
-        client = MongoClient(MONGODB_URI)
-        self.db = client['polls'] # this gives the database
-        self.polls = self.db.polls # this gives the collection of polls (+creates it)
-        self.selected_polls = self.db.selected_polls
+        MONGODB_URI = os.environ['MONGODB_URI']
+        self.db = MongoClient(MONGODB_URI).heroku_6lqmlg1q
+        self.polls = self.db.polls  # this gives the collection of polls (+creates it)
+        self.user_data = self.db.user_data
         # in the worst case just hardcode the app user ids here
-        self.app_users = self.db.users
-        self.app_users = []
-        self.friends = self.db.friends
-        self.names = self.db.names
+        # self.app_users = self.db.users
+        # self.app_users = []
+        # self.friends = self.db.friends
+        # self.names = self.db.names
+
+    def register_user(self, user_id):
+        user_data = self.user_data.find_one({"user_id": user_id})
+        if user_data is None:
+            self.user_data.insert_one({
+                "user_id": user_id,
+                "name": facebook.get_user_name(user_id),
+                "selected_poll_name": None,
+            })
 
     def create_poll(self, user_id, poll_name):
         """(returns an error message or None if succeeds)"""
@@ -92,17 +103,17 @@ class Model:
             return "Error - the poll name is already used."
         poll = {"poll_name": poll_name,
                 "admin_id": user_id,
-                "participants": [],
+                "participants": [user_id],
                 "songs": []
-               }
-        self.polls.insert_one(post)
+                }
+        self.polls.insert_one(poll)
 
     def is_admin_of_poll(self, user_id, poll_name):
         """Returns either True or False based on if the user with given
         user_id is an admin of the poll_name
         """
         poll_doc = self.polls.find_one({"poll_name": poll_name})
-        if poll_doc:
+        if poll_doc is not None:
             if poll_doc["admin_id"] == user_id:
                 return True
             else:
@@ -115,36 +126,34 @@ class Model:
         we can have one selected poll per user - or change it?
         """
         # check if the poll exists
-        if not self.polls.find_one({"poll_name": poll_name}):
+        if self.polls.find_one({"poll_name": poll_name}) is None:
             return "Error - the poll does not exist."
-        sel_pol_doc = self.selected_polls.find_one({"user_id": user_id})
+        sel_pol_doc = self.user_data.find_one({"user_id": user_id})
         # if the user already has something selected, change the poll name
         if sel_pol_doc:
-            sel_pol_doc["poll_name"] = poll_name
+            self.user_data.update({"_id": sel_pol_doc['_id']}, {"$set": {
+                "selected_poll_name": poll_name
+            }})
         else:
-            self.selected_polls.insert_one({"user_id": user_id,
-                                            "selected_poll": poll_name})
+            self.user_data.insert_one({"user_id": user_id,
+                                       "selected_poll_name": poll_name})
 
     def get_selected_poll(self, user_id):
         """(returns None or the name of the selected poll for that user)"""
-        sel_pol_doc = self.selected_polls.find_one({"user_id": user_id})
-        if sel_pol_doc:
-            return sel_pol_doc["selected_poll"]
+        sel_pol_doc = self.user_data.find_one({"user_id": user_id})
+        if sel_pol_doc is not None:
+            return sel_pol_doc["selected_poll_name"]
+        return None
 
-    def get_polls_for_user(self, sender_id):
+    def get_polls_for_user(self, user_id):
         """returning a list of strings (the poll names where this user is
          active in, both as admin and as participant)
         """
         poll_names = set([])
-        for poll in self.polls.find({"admin_id": sender_id}):
-            poll_names.add(poll["poll_name"])
-
         for poll in self.polls.find():
-            if sender_id in poll["participants"]:
+            if user_id in poll["participants"]:
                 poll_names.add(poll["poll_name"])
         return list(poll_names)
-
-        # get all the polls where the user is admin
 
     def invite_friend(self, user_id, poll_name, friend_name):
         """returning an error message if user_id is not the admin of poll_name,
@@ -153,16 +162,32 @@ class Model:
         friend is given as a name --> convert it to id
         using database
         """
-        friend = self.names.find_one({"name": friend_name})["user_id"]
-        if self.selected_polls.find_one({"poll_name": poll_name, "admin_id": user_id}):
-            if friend in self.app_users:
-                if friend in self.friends.find_one({"user_id": user_id})["friends"]:
-                    # update the field of participants for the poll
-                    participants = self.polls.find_one({"poll_name": poll_name})["participants"]
-                    participants.append(friend)
-                    # now update the list of participants in the collection of polls for the given poll
-                    self.polls.update_one({"poll_name": poll_name}, {'$set': {'participants': participants}})
-        return "Error - not admin, not user or not friend."
+        poll = self.polls.find_one({"poll_name": poll_name, "admin_id": user_id})
+        if poll is None:
+            return "Error - Poll does not exist or is not owned by user."
+        user = self.user_data.find_one({"user_id": user_id})
+        if user is None:
+            return "Error - No user record found"
+        user_friends = facebook.get_user_friends(user_id)
+        official_friend_name = None
+        for f in user_friends:
+            if friend_name in f:
+                official_friend_name = friend_name
+        if official_friend_name is None:
+            return "Error - No valid friend found"
+        friend = self.user_data.find_one({"display_name": friend_name})
+        if friend is None:
+            return "Friend is not using the bot!"
+
+        # update the field of participants for the poll
+        self.polls.update_one({
+            "poll_name": poll_name
+        }, {
+            "participants": {
+                "$addToSet": friend['user_id']
+            }
+        })
+        return None
 
     def get_ranking(self, user_id, poll):
         """ returning a list of dicts, each representing one song:
@@ -184,38 +209,39 @@ class Model:
         of a given person. We store all friends of a person on Facebook.
         We need an intersection of the friends of person_id and app_users.
         """
+        user = self.user_data.find_one({"user_id": person_id})
+        facebook_friends = facebook.get_user_friends(person_id)
         active_friends = []
-        app_users_set = set(app_users)
-        friends = self.friends.find_one({"user_id": person_id})["friends"]
-        for friend in friends:
-            if friend in self.app_users_set:
-                active_friends.append(friend)
+        for friend in facebook_friends:
+            friend_data = self.user_data.find_one({"user_id": friend})
+            if friend_data is not None:
+                active_friends.append({"user_id": friend, "display_name": friend['name']})
         return active_friends
 
-    def suggest_song(self, user_id, poll, song_id):
+    def suggest_song(self, user_id, poll_id, song_id):
         """adds the song to poll as a suggestion from user user_id. Returns
            None on success or a string with an
            error message when something goes wrong.
         """
-        try:
-            poll_songs = self.polls.find_one({"poll_name": poll})["songs"]
-            # how to add the new song to the db?
-            # need artist, name, uri, score will be 1
-            """get from Spotify the info based on song_id"""
-            artist_new = ""
-            name_new = ""
-            uri_new = ""
-            new = True
-            for song_i in range(len(poll_songs)):
-                if uri_new == poll_songs[song_i]["uri"]:
-                    poll_songs[song_i]["score"] += 1
-                    new = False
-            if new:
-                poll_songs.append({"artist": artist_new, "name": name_new, "uri": uri_new, "score": 1})
-
-            self.polls.update_one({"poll_name": poll}, {'$set': {'songs': poll_songs}})
-        except:
-            return "Unexpected error occurred"
+        poll = self.polls.find_one({"poll_name": poll_id, "admin_id": user_id})
+        if poll is None:
+            return "Error - No such poll found"
+        if song_id in map(lambda x: x['song_id'], poll['songs']):
+            return "Error - Song already in the poll"
+        title, artist, uri = spotify.track_name.get_metadata(song_id)
+        self.polls.update({
+            "poll_name": poll_id
+        }, {
+            "$insert": {
+                "songs": {
+                    "song_id": song_id,
+                    "title": title,
+                    "artist": artist,
+                    "votes": dict()
+                }
+            }
+        })
+        return None
 
     def get_poll_participants(self, user_id, poll):
         """returns a list of
@@ -225,10 +251,13 @@ class Model:
            (only returned when user_id is a member of that poll as well). Returns
            the list upon success or <string> when an error occurred.
         """
-        participants = self.polls.find_one({"poll_name": poll})["participants"]
+        poll = self.polls.find_one({"poll_name": poll, "participants": {"$contains": user_id}})
+        if poll is None:
+            return "Error - poll does not exist"
+        participants = poll["participants"]
         if user_id in participants:
             people_list = []
-            for e in  participants:
-                people_list.append({"user_id": e, "display_name": self.names.find_one({"user_id": e})["name"]})
+            for e in participants:
+                people_list.append({"user_id": e, "display_name": self.user_data.find_one({"user_id": e})["name"]})
             return people_list
-        return "Error - poll does not exist or the user is not a member of poll."
+        return "Error - user is not a member of poll."

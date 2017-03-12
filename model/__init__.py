@@ -1,5 +1,11 @@
 # interaction with MongoDB
+import mongo
 
+data_model = mongo.Model()
+
+
+def register_user(user_id):
+    data_model.register_user(user_id)
 
 
 # Dummy methods - to be deleted
@@ -14,30 +20,23 @@ def get_active_friends(user_id):
 
 
 def select_poll(user_id, poll_name):
-    if poll_name != "wrong_poll":
-        return None
-    else:
-        return "This should be an error"
+    return data_model.select_poll(user_id, poll_name)
 
 
 def create_poll(user_id, poll_name):
-    if "0" in poll_name:
-        return "I don't like zeros, please don't put a zero in the name!"
-    return None
+    return data_model.create_poll(user_id, poll_name)
 
 
 def is_admin_of_poll(user_id, poll_name):
-    if "anarchy" in poll_name:
-        return False
-    return True
+    return data_model.is_admin_of_poll(user_id, poll_name)
 
 
 def get_selected_poll(user_id):
-    return "roadtrip"
+    return data_model.get_selected_poll(user_id)
 
 
 def get_polls_for_user(user_id):
-    return ["roadtrip", "house_party", "all_anarchy"]
+    return data_model.get_polls_for_user(user_id)
 
 
 def invite_friend(user_id, poll_name, friend):
@@ -62,13 +61,7 @@ def update_user_vote(user_id, poll_id, song_id, score):
 
 
 def get_poll_participants(user_id, poll_id):
-    participants = [
-        {"user_id": "1363580823709423", "display_name": "Participant 1"},
-        {"user_id": "1363580823709423", "display_name": "Participant 2"},
-        {"user_id": "1363580823709423", "display_name": "Participant 3"}
-    ]
-
-    return participants
+    return data_model.get_poll_participants(user_id, poll_id)
 
 
 def suggest_song(user_id, poll, song_id):

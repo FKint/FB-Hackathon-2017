@@ -9,7 +9,7 @@ from logs import log
 
 
 def send_message(recipient_id, message_text, buttons=None):
-    log("sending message to {recipient}: {text}".format(recipient=recipient_id, text=message_text))
+    log("SENDING DATA to {recipient}:".format(recipient=recipient_id))
 
     params = {
         "access_token": os.environ["PAGE_ACCESS_TOKEN"]
@@ -40,10 +40,11 @@ def send_message(recipient_id, message_text, buttons=None):
 
     data = json.dumps(data)
 
-    print "Data is " + data
+    log(data)
 
     r = requests.post("https://graph.facebook.com/v2.6/me/messages", params=params, headers=headers, data=data)
     if r.status_code != 200:
+        log("ERROR SENDING TO FB!")
         log(r.status_code)
         log(r.text)
 
@@ -53,15 +54,10 @@ class Edi(object):
         pass
 
     def handle_message(self, sender_id, message_text):
-        print "handle message..."
-        print "sender_id = " + sender_id
-        print "message_text = " + message_text
-
+        log("PROCESSING MESSAGE FROM {}".format(sender_id))
+        log(message_text)
         action = self.get_action(message_text)
-
-        print "and action = " + (action if action is not None else "")
-        if spotify.track_name.get_track_from_message(message_text) is not None:
-            self.suggest_song(sender_id, message_text)
+        log("ACTION: {}".format(action))
         if action == Edi.ACTION_INTRODUCE_BOT:
             self.introduce_bot(sender_id, message_text)
         elif action == Edi.ACTION_CREATE_POLL:
@@ -85,7 +81,9 @@ class Edi(object):
         elif action == Edi.ACTION_SUGGEST_SONG:
             self.suggest_song(sender_id, message_text)
         # TODO: add other cases
-
+        elif spotify.track_name.get_track_from_message(message_text) is not None:
+            log("Recognizes spotify URL")
+            self.suggest_song(sender_id, message_text)
         else:
             send_message(sender_id, "I don't know what you mean. Send me 'help' if you want some help.")
 

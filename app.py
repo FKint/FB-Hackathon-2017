@@ -3,10 +3,10 @@ import os
 from flask import Flask, request
 
 import chatbot
+import model
 from logs import log
 
 app = Flask(__name__)
-
 edi = chatbot.Edi()
 
 
@@ -27,6 +27,7 @@ def webhook():
     # endpoint for processing incoming messaging events
 
     data = request.get_json()
+    log("RECEIVED DATA: ")
     log(data)  # you may not want to log every incoming message in production, but it's good for testing
 
     if data["object"] == "page":
@@ -36,7 +37,7 @@ def webhook():
                 sender_id = messaging_event["sender"]["id"]  # the facebook ID of the person sending you the message
                 recipient_id = messaging_event["recipient"][
                     "id"]  # the recipient's ID, which should be your page's facebook ID
-
+                model.register_user(sender_id)
                 if messaging_event.get("message"):  # someone sent us a message
 
                     message_text = None
@@ -54,8 +55,6 @@ def webhook():
                     pass
 
                 if messaging_event.get("postback"):  # user clicked/tapped "postback" button in earlier message
-                    log("Postback received")
-                    log(messaging_event)
                     postback = messaging_event["postback"]
                     edi.handle_postback(sender_id, postback)
 

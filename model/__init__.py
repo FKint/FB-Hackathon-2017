@@ -79,4 +79,4 @@ def get_user_state(poll, user):
 
 
 def get_song_option(user_id, poll_id):
-    return "7aIjefMJSpmNVivRcS1unF"
+    return data_model.get_song_option(user_id, poll_id)

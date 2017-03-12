@@ -1,5 +1,7 @@
 import os
+
 from pymongo import MongoClient
+
 import facebook
 import spotify.track_name
 from logs import log
@@ -251,7 +253,7 @@ class Model:
            (only returned when user_id is a member of that poll as well). Returns
            the list upon success or <string> when an error occurred.
         """
-        poll = self.polls.find_one({"poll_name": poll}) #, "participants": user_id})
+        poll = self.polls.find_one({"poll_name": poll})  # , "participants": user_id})
         if poll is None:
             return "Error - poll does not exist"
         participants = poll["participants"]
@@ -281,7 +283,6 @@ class Model:
             }
         })
 
-
     def get_user_state(self, poll_id, user_id):
         """returns the state of the user with user_id
         within the poll with poll_id
@@ -296,11 +297,11 @@ class Model:
         """returns the ID of a song that the user still has to vote for
         in poll (or None if no such song exists).
         """
-        poll = self.polls.find_one({"poll_name": poll})
+        poll = self.polls.find_one({"poll_name": poll_id})
         for song in poll["songs"]:
-            # check if the user has a vote inside the vote part of dictionary
-            if self.get_user_state(poll_id, user_id) == "waiting":
+            if user_id not in song['votes']:
                 return song["song_id"]
+        return None
 
     def update_user_vote(self, user_id, poll_id, song_id, score):
         """sets the vote for user_id in poll_id for song_id to score

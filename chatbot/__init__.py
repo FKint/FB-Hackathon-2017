@@ -225,7 +225,7 @@ class Edi(object):
         )
         send_message(
             sender_id,
-            "You can ask me to send a song that you can vote for by sending 'show option'."
+            "You can ask me to send a song that you can vote for by sending 'show song'."
         )
         send_message(
             sender_id,
@@ -397,16 +397,29 @@ class Edi(object):
     def show_song_option(self, sender_id, message_text):
         # Retrieve random song that user needs to vote for
         # Present with 0, 1 or cancel button.
-        # No song available: suggest a song?
+        # No song available: suggest a song
+        poll_id = model.get_selected_poll(sender_id)
+        if poll_id is None:
+            send_message(
+                sender_id,
+                "You haven't selected a poll. Try 'show all polls' and 'select poll <poll>' to select a poll."
 
+            )
+            return
+        song_id = model.get_song_option(sender_id, poll_id)
+        if song_id is None:
+            send_message(
+                sender_id,
+                "There are no songs left for which you can vote. You can still suggest new songs!"
+            )
         message = "Please vote for this song"
         buttons = [
             {
                 "type": "postback",
                 "title": "Dislike",
                 "payload": json.dumps({
-                    "song_id": "<REDACTED>",
-                    "poll_id": "<REDACTED>",
+                    "song_id": song_id,
+                    "poll_id": poll_id,
                     "score": 0,
                     "action": "voting"
                 })
@@ -415,8 +428,8 @@ class Edi(object):
                 "type": "postback",
                 "title": "Like",
                 "payload": json.dumps({
-                    "song_id": "<REDACTED>",
-                    "poll_id": "<REDACTED>",
+                    "song_id": song_id,
+                    "poll_id": poll_id,
                     "score": 1,
                     "action": "voting"
                 })

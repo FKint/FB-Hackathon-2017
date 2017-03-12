@@ -129,8 +129,7 @@ class Edi(object):
         elif action == Edi.ACTION_SHOW_POLLS_LIST:
             self.show_polls_list(sender_id, "")
         elif action == Edi.ACTION_SHOW_POLL_PARTICIPANTS:
-            poll_id = payload["poll_id"]
-            self.show_poll_participants(sender_id, "show poll " + poll_id)
+            self.show_poll_participants(sender_id, "")
         elif action == Edi.ACTION_SHOW_RANKING:
             self.show_ranking(sender_id, "")
         elif action == Edi.ACTION_INVITE_FRIEND:
@@ -336,7 +335,8 @@ class Edi(object):
         send_message(
             sender_id,
             "You can see all polls by sending me 'show all polls'. "
-            "You can select another poll by sending me 'select poll <poll>', where <poll> is the name of the poll.",
+            "You can select another poll by sending me 'select poll <poll>', where <poll> is the name of the poll. "
+            "You can ask to vote for songs by sending 'show song'.",
             buttons=[
                         {
                             "type": "postback",
@@ -344,7 +344,9 @@ class Edi(object):
                             "payload": json.dumps({
                                 "action": Edi.ACTION_SHOW_POLLS_LIST
                             })
-                        }] + self.get_poll_select_buttons(sender_id, exception=poll_name)
+                        }] + self.get_poll_select_buttons(sender_id, exception=poll_name) + [
+                        self.get_show_song_button()
+                    ]
         )
 
     def get_poll_select_buttons(self, user_id, exception=None):
@@ -606,23 +608,20 @@ class Edi(object):
         )
 
     def show_poll_participants(self, sender_id, message_text):
-        if len(message_text.split()) != 2:
-            send_message(sender_id, "I am sorry, the option format must be 'show participants'")
+        poll_id = model.get_selected_poll(sender_id)
+
+        message = "The participants in poll " + (poll_id if poll_id is not None else "NONE") + " are:\n"
+
+        participants = model.get_poll_participants(sender_id, poll_id)
+        if isinstance(participants, list):
+            for participant in participants:
+                message += participant["display_name"] + "\n"
+
+            send_message(sender_id, message)
         else:
-            poll_id = model.get_selected_poll(sender_id)
-
-            message = "The participants in poll " + (poll_id if poll_id is not None else "NONE") + " are:\n"
-
-            participants = model.get_poll_participants(sender_id, poll_id)
-            if isinstance(participants, list):
-                for participant in participants:
-                    message += participant["display_name"] + "\n"
-
-                send_message(sender_id, message)
-            else:
-                log(participants)
-                send_message(sender_id,
-                             "An error happened, sorry: {}".format(participants))
+            log(participants)
+            send_message(sender_id,
+                         "An error happened, sorry: {}".format(participants))
 
     def export_list(self, sender_id, message_text):
         send_message(sender_id, "Unfortunately this functionality is not ready yet!")

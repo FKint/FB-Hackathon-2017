@@ -57,7 +57,8 @@ class Edi(object):
     def write_no_poll_selected(self, sender_id):
         send_message(
             sender_id,
-            "You haven't selected a poll. Try 'show all polls' and 'select poll <poll>' to select a poll."
+            "You haven't selected a poll. Try 'show all polls' and 'select poll <poll>' to select a poll.",
+            buttons=[self.get_polls_list_button(sender_id)] + self.get_poll_select_buttons(sender_id)
         )
 
     def handle_message(self, sender_id, message_text):
@@ -190,6 +191,15 @@ class Edi(object):
                 return Edi.PREFIX_ACTIONS[prefix]
         return None
 
+    def get_polls_list_button(self, user_id):
+        return {
+                   "type": "postback",
+                   "title": "Show all polls",
+                   "payload": json.dumps({
+                       "action": Edi.ACTION_SHOW_POLLS_LIST
+                   })
+               },
+
     def introduce_bot(self, sender_id, message_text):
         # How to create a poll, list of all polls, show friends
         send_message(sender_id, "Hello, I'm Edi. I will help you vote on playlists with your friends using our polls.")
@@ -197,19 +207,14 @@ class Edi(object):
                      "Send me 'create poll roadtrip' to create a new playlist called 'roadtrip'.")
         send_message(sender_id, "Send me 'show all polls' to see a list of all current polls. "
                                 "Send me 'show active friends' to get a list of all your friends that use me.",
-                     buttons=[{
-                         "type": "postback",
-                         "title": "Show all polls",
-                         "payload": json.dumps({
-                             "action": Edi.ACTION_SHOW_POLLS_LIST
-                         })
-                     }, {
-                         "type": "postback",
-                         "title": "Show active friends",
-                         "payload": json.dumps({
-                             "action": Edi.ACTION_SHOW_ACTIVE_FRIENDS
-                         })
-                     }, ])
+                     buttons=[self.get_polls_list_button(sender_id),
+                              {
+                                  "type": "postback",
+                                  "title": "Show active friends",
+                                  "payload": json.dumps({
+                                      "action": Edi.ACTION_SHOW_ACTIVE_FRIENDS
+                                  })
+                              }, ])
 
     def show_active_friends(self, sender_id, message_text):
         # List of all Messenger contacts that can be invited

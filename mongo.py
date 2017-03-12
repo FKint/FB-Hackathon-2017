@@ -227,9 +227,10 @@ class Model:
         poll = self.polls.find_one({"poll_name": poll_id})
         if poll is None:
             return "Error - No such poll found"
+        log("Finding song {} in {}".format(song_id, poll['songs']))
         if song_id in map(lambda x: x['song_id'], poll['songs']):
             return "Error - Song already in the poll"
-        title, artist, uri = spotify.track_name.get_metadata(song_id)
+        artist, title, uri = spotify.track_name.get_metadata(song_id)
         self.polls.update({
             "poll_name": poll_id
         }, {

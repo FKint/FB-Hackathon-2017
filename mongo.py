@@ -224,16 +224,17 @@ class Model:
            None on success or a string with an
            error message when something goes wrong.
         """
-        poll = self.polls.find_one({"poll_name": poll_id, "admin_id": user_id})
+        poll = self.polls.find_one({"poll_name": poll_id})
         if poll is None:
             return "Error - No such poll found"
+        log("Finding song {} in {}".format(song_id, poll['songs']))
         if song_id in map(lambda x: x['song_id'], poll['songs']):
             return "Error - Song already in the poll"
-        title, artist, uri = spotify.track_name.get_metadata(song_id)
+        artist, title, uri = spotify.track_name.get_metadata(song_id)
         self.polls.update({
             "poll_name": poll_id
         }, {
-            "$insert": {
+            "$push": {
                 "songs": {
                     "song_id": song_id,
                     "title": title,
@@ -298,6 +299,8 @@ class Model:
         in poll (or None if no such song exists).
         """
         poll = self.polls.find_one({"poll_name": poll_id})
+        log("Songs for poll {}".format(poll_id))
+        log(poll["songs"])
         for song in poll["songs"]:
             if user_id not in song['votes']:
                 return song["song_id"]
